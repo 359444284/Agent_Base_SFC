@@ -10,6 +10,12 @@ timeFraction: 12 #52
 tollerance: 0.10
 investmentGoods: [1] #list of type of investment goods (must be consistent with firm-features.csv)
 minOfInventoriesBeingSold: 0.75
-rangeOfInventoriesBeingSold: 0.25 #must be complement to 1 with the above minOfInventoriesBeingSold
-usingMarkup: True
-centralPlannerPriceCoefficient: 1 #must be 1 if usingMarkup == True
+rangeOfInventoriesBeingSold: 0.25 #must be complement to 1 with the above minOfInventoriesBeingSoldusingMarkup: True
+centralPlannerPriceCoefficient: 1 #must be 1 if usingMarkup == True 
+
+
+
+
+
+# Bank
+depositInterestRate: 0.0005
