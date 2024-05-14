@@ -1,0 +1,42 @@
+#myRandom.seed:  [4321,4321,4321,4321,4321,4321,4321,4321, 4321,4321,4321,4321,4321,4321,4321,4321] #increase the number of items if more than 16 ranks #[4321,4321,4321]
+myRandom.seed:  [4321,4322,4323,4324,4325,4326,4327,4328, 4329,4330,4331,4332,4333,4334,4335,4336] #increase the number of items if more than 16 ranks #[4321,4321,4321]
+howManyCycles: 48 #264 #144
+Firm.count: 100 #11 #1000
+probabilityToFailProductionChoices: 0.1 #0.05 #0
+tickNumber.betweenChecks: 10
+log_file_root: 'PlannerPropTest' #'PlannerPropMax2' #'PlannerPropMin2' #'PlannerPropReg2' #'PlannerRandom' #'PlannerTotal' #'PlannerZero'
+wage: 1
+costOfCapital: 0.1
+timeFraction: 12 #52
+tollerance: 0.10
+investmentGoods: [1] #list of type of investment goods (must be consistent with firm-features.csv)
+minOfInventoriesBeingSold: 0.75
+rangeOfInventoriesBeingSold: 0.25 #must be complement to 1 with the above minOfInventoriesBeingSold
+usingMarkup: True
+centralPlannerPriceCoefficient: 1 #must be 1 if usingMarkup == True
+
+
+
+
+
+# Agent Type
+FIRM_TYPE: &FIRM_TYPE 0
+CEN_PLANNER_TYPE: &CEN_PLANNER_TYPE 1
+CEN_PLANNER_REPORTER_TYPE: &CEN_PLANNER_REPORTER_TYPE 2
+COMM_BANK_TYPE: &COMM_BANK_TYPE 3
+COMM_BANK_REPORTER_TYPE: &COMM_BANK_REPORTER_TYPE 4
+CEN_BANK_TYPE: &CEN_BANK_TYPE 5
+CEN_BANK_REPORTER_TYPE: &CEN_BANK_REPORTER_TYPE 6
+
+# Agent Type Number  
+agent_distribute_mode: 'mean'  
+agents_amount:
+  *FIRM_TYPE: 500
+  *COMM_BANK_TYPE: 6
+
+
+
+
+
+# Bank
+depositInterestRate: 0.0005
