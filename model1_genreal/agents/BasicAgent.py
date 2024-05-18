@@ -5,8 +5,11 @@ from typing import Tuple, List, Dict
 
 
 class BasicAgent(core.Agent, abc.ABC):
-    def __init__(self, uid: Tuple):
+    def __init__(self, uid: Tuple, isGlobal:bool, paramGroup):
         super().__init__(id=uid[0], type=uid[1], rank=uid[2])
+
+        self.isGlobal = paramGroup
+        self.paramGroup = paramGroup
 
         self.globalStocks = None
         self.globalFlows = None
@@ -28,7 +31,7 @@ class BasicAgent(core.Agent, abc.ABC):
 
         return aggrate_data
 
-    # only call by main agent
+
     def aggrigateStocks(self, stocks):
         counter = np.zeros(len(stocks))
 
@@ -38,6 +41,7 @@ class BasicAgent(core.Agent, abc.ABC):
         
         return counter
     
+
     def mergeInformationTableData(self):
         # if rank == self.uid[2]:
 
@@ -53,11 +57,13 @@ class BasicAgent(core.Agent, abc.ABC):
         self.localFlows.fill(0)
 
 
+
+
     def save(self):
         return (self.uid, 
-               (self.globalStocks, self.globalFlows)
+               (self.globalStocks, self.globalFlows, self.isGlobal, self.paramGroup)
                )
 
     def update(self, basic_info):
-        self.globalStocks, self.globalFlows = basic_info
+        self.globalStocks, self.globalFlows, self.isGlobal, self.paramGroup = basic_info
     

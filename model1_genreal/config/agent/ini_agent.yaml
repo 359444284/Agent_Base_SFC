@@ -5,16 +5,41 @@ FIRM_TYPE: &FIRM_TYPE 0
 CEN_PLANNER_TYPE: &CEN_PLANNER_TYPE 1
 CEN_PLANNER_REPORTER_TYPE: &CEN_PLANNER_REPORTER_TYPE 2
 COMM_BANK_TYPE: &COMM_BANK_TYPE 3
-COMM_BANK_REPORTER_TYPE: &COMM_BANK_REPORTER_TYPE 4
-CEN_BANK_TYPE: &CEN_BANK_TYPE 5
-CEN_BANK_REPORTER_TYPE: &CEN_BANK_REPORTER_TYPE 6
+CEN_BANK_TYPE: &CEN_BANK_TYPE 4
 
 # -------------- Agent Parameters ------------------
 agent_params:
   *COMM_BANK_TYPE:
-    &basic_bank 0:
+    param_name: [depositInterestRate, loanInterestRate]
+    &default_bank 0:
       depositInterestRate: 0.001
       loanInterestRate: 0.0012
+
+
+  *CEN_BANK_TYPE:
+    param_name: []
+    &default_cen_bank 0:
+
+  *CEN_PLANNER_TYPE:
+    param_name: []
+    &default_cen_planner 0:
+      #incrementAndSubstitutions = 'zero', 'random', 'total', 'proportionally' # to be accorded with the name of the folder in the experiments
+      incrementAndSubstitutions: 'total'
+      #askingMaxInvGoodsProduction = 'min', 'regular', 'max' # to be accorded with the name of the folder in the experiments -> PropMin, PropMax
+      # relevant only under the case of incrementAndSubstitutions = 'proportionally'
+      askingInvGoodsProduction: 'max' # OR 'regular' (basic option) OR 'min' OR 'max'
+      investmentVariation: 0.8 # positive or negative in (-1,+1)
+      #used as 1+investmentVariation for the cases 'min' (must be negative) or 'max' (must be positive)
+      #################################################
+      #order generation (alternatively)
+      noOrderGeneration: false
+      randomOrderGeneration: true
+      #################################################
+      #modify duration
+      durationCoeff: 2
+
+
+
 
 #  ------------- create agents ----------------------
 agent_distribute_mode: mean
@@ -23,19 +48,37 @@ agent_distribute_mode: mean
 
 agents:
   *COMM_BANK_TYPE:
-    total_amount: 6
+    total_amount: 10
     groups:
       local_banks:
-        share: 0
-        sectorialClass:
+        share: 0.2
+        paramGroup:
           # parameter group
-          *basic_bank
+          *default_bank
         isGlobal: false
 
       global_banks:
-        share: 0.2
-        sectorialClass:
+        share: 0.8
+        paramGroup:
           # parameter group
-          *basic_bank
+          *default_bank
+        isGlobal: true
+
+  *CEN_BANK_TYPE:
+    total_amount: 1
+    groups:
+      unique:
+        share: 1
+        paramGroup:
+          *default_cen_bank
+        isGlobal: true
+
+  *CEN_PLANNER_TYPE:
+    total_amount: 1
+    groups:
+      unique:
+        share: 1
+        paramGroup:
+          *default_cen_planner
         isGlobal: true
 

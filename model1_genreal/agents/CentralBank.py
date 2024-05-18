@@ -15,9 +15,10 @@ class CentralBank(BasicAgent):
     DEPOSIT_DELTA = 0
     RESERVE_DELTA = 1
     
-    def __init__(self, uid: Tuple):
-        super().__init__(uid)
+    def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int):
+        super().__init__(uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
+        self.params = params
 
         self.globalStocks = np.zeros(self.STOCK_AMOUNT)
 
@@ -40,6 +41,21 @@ class CentralBank(BasicAgent):
 
         self.reporterGhostList = []
 
-    
+    # def save(self):
+    #     basic_info = super().save()
+    #
+    #     params = (
+    #         None
+    #     )
+    #
+    #     return (*basic_info, params)
+    #
+    # def update(self, basic_info, params=None):
+    #     # fill this part
+    #     super().update(basic_info)
+    #     if params is not None:
+    #         (
+    #             None) = params
+
 
     
