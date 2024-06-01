@@ -10,8 +10,8 @@ class CentralPlanner(BasicAgent):
                  investmentVariation:float, randomOrderGeneration:bool, durationCoeff: float):
         super().__init__(uid=uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
+        # params
         self.params = params
-
         self.incrementAndSubstitutions = incrementAndSubstitutions
         self.noOrderGeneration = noOrderGeneration
         self.askingInvGoodsProduction = askingInvGoodsProduction
@@ -22,12 +22,7 @@ class CentralPlanner(BasicAgent):
 
         self.informationTable = np.zeros((params['howManyCycles'], 5))  # col 5 not used multiranks,
         # it only reports gross exp inv in output ##ptpt
-        # workingMultirank only
-        self.informationTableMultirank = np.zeros(4)
-        self.allFirmsDesiredCapitalQsubstitutionsMultirank = 0
-        self.allFirmsRequiredCapitalQincrementMultirank = 0
-        self.allFirmsDesiredCapitalSubstitutionsMultirank = 0
-        self.allFirmsRequiredCapitalIncrementMultirank = 0
+
         # workingMultirank use it only if rank > 0
         self.theCentralPlannerReporter = 0
 
@@ -56,41 +51,17 @@ class CentralPlanner(BasicAgent):
 
             # the planner has to know whether it received the investment goods produced by the firms
             # and it will read it from this information table, which is updated at t-1
-
-            self.informationTable[model.t(), 0] = sum(model.totalInvGoodsRevenues[
-                                                          model.t() - 1])  # inv goods bought by the planner=sum(model.totalInvGoodsRevenues[t()-1]) #inv goods bought by the planner
-            self.informationTable[model.t(), 1] = sum(
-                model.totalInvGoodsInventories[model.t() - 1])  # unbought and still available for the planner (stock)
-            self.informationTable[model.t(), 2] = sum(model.totalGrossInvestmentQ[model.t() - 1])
-            currentPrice = model.context.agent(
-                (0, self.params['FIRM_TYPE'], model.rank)).currentPriceOfDurableProductiveGoodsPerUnit
-            self.informationTable[model.t(), 3] = sum(model.totalGrossInvestmentQ[model.t() - 1]) * currentPrice
-
             self.localFlows[0] = sum(model.totalInvGoodsRevenues[model.t() - 1])
             self.localFlows[1] = sum(model.totalInvGoodsInventories[model.t() - 1])
             self.localFlows[2] = sum(model.totalGrossInvestmentQ[model.t() - 1])
+            currentPrice = model.context.agent(
+                (0, self.params['FIRM_TYPE'], model.rank)).currentPriceOfDurableProductiveGoodsPerUnit
             self.localFlows[3] = sum(model.totalGrossInvestmentQ[model.t() - 1]) * currentPrice
 
-
-
-            # workingMultiRank
-        # if rank>0 sending infos to the centralPlannerReporter
-        if model.rank > 0:
-            self.theCentralPlannerReporter.informationTableLastCols(
-            self.informationTable[model.t(), 0], \
-            self.informationTable[model.t(), 1], \
-            self.informationTable[model.t(), 2], \
-            self.informationTable[model.t(), 3])
-
-    def mergeInformationTableData1(self, theCentralPlannerReporterGhostList, model):
-        # merge data from central planner reporter ghosts
-        # starting with rank 0's data and adding those of the others ranks in the for cycle
-        for j in range(4):
-            if model.rank == 0: self.informationTableMultirank[j] = self.informationTable[model.t(), j]
-            for i in range(1, model.rankNum):
-                self.informationTableMultirank[j] += \
-                    theCentralPlannerReporterGhostList[i - 1].informationTableLastCol[j]
-                # to be used ONLY to calculate the proportionalValue in multirank runs
+            self.informationTable[model.t(), 0] = self.localFlows[0]
+            self.informationTable[model.t(), 1] = self.localFlows[1]
+            self.informationTable[model.t(), 2] = self.localFlows[2]
+            self.informationTable[model.t(), 3] = self.localFlows[3]
 
     def diffusingProductionOrders(self, model):
 
@@ -169,74 +140,22 @@ class CentralPlanner(BasicAgent):
 
     def askFirmsInvGoodsDemand(self, model):
 
-        self.allFirmsDesiredCapitalQsubstitutions = 0
-        self.allFirmsRequiredCapitalQincrement = 0
-        self.allFirmsDesiredCapitalSubstitutions = 0
-        self.allFirmsRequiredCapitalIncrement = 0
-
         for aFirm in model.context.agents(agent_type=self.params['FIRM_TYPE']):
             (desiredCapitalQsubstitutions, requiredCapitalQincrement, \
              desiredCapitalSubstitutions, requiredCapitalIncrement) = aFirm.allowInformationToCentralPlanner()
 
             # TOTALIZING INVESTMENT GOODS REQUESTS
-            self.allFirmsDesiredCapitalQsubstitutions += desiredCapitalQsubstitutions
-            self.allFirmsRequiredCapitalQincrement += requiredCapitalQincrement
-            self.allFirmsDesiredCapitalSubstitutions += desiredCapitalSubstitutions
-            self.allFirmsRequiredCapitalIncrement += requiredCapitalIncrement
+            self.localFlows[4] += desiredCapitalQsubstitutions
+            self.localFlows[5] += requiredCapitalQincrement
+            self.localFlows[6] += desiredCapitalSubstitutions
+            self.localFlows[7] += requiredCapitalIncrement
 
 
-        ##ptpt
-        # to report in output the gross expected investments in value
-        self.informationTable[model.t(), 4] = self.allFirmsDesiredCapitalSubstitutions + \
-                                              self.allFirmsRequiredCapitalIncrement
+        self.informationTable[model.t(), 4] = self.localFlows[6] + self.localFlows[7]
 
-        # workingMultiRank
-        # if rank>0 sending infos to the centralPlannerReporter
-        if model.rank > 0:
-            self.theCentralPlannerReporter.invGoodsDemand(
-            self.allFirmsDesiredCapitalQsubstitutions, \
-            self.allFirmsRequiredCapitalQincrement, \
-            self.allFirmsDesiredCapitalSubstitutions, \
-            self.allFirmsRequiredCapitalIncrement)
-
-        self.localFlows[4] = self.allFirmsDesiredCapitalQsubstitutions
-        self.localFlows[5] = self.allFirmsRequiredCapitalQincrement
-        self.localFlows[6] = self.allFirmsDesiredCapitalSubstitutions
-        self.localFlows[7] = self.allFirmsRequiredCapitalIncrement
-
-
-    def mergeInvGoodsDemand(self, theCentralPlannerReporterGhostList, model):
-        if model.rank == 0:
-            self.allFirmsDesiredCapitalQsubstitutionsMultirank = self.allFirmsDesiredCapitalQsubstitutions
-            self.allFirmsRequiredCapitalQincrementMultirank = self.allFirmsRequiredCapitalQincrement
-            self.allFirmsDesiredCapitalSubstitutionsMultirank = self.allFirmsDesiredCapitalSubstitutions
-            self.allFirmsRequiredCapitalIncrementMultirank = self.allFirmsRequiredCapitalIncrement
-
-        for i in range(1, model.rankNum):
-            # print("rank",i,theCentralPlannerReporterGhostList[i-1].invGoodsDemandList,flush=True)
-            self.allFirmsDesiredCapitalQsubstitutionsMultirank += \
-                theCentralPlannerReporterGhostList[i - 1].invGoodsDemandList[0]
-            self.allFirmsRequiredCapitalQincrementMultirank += \
-                theCentralPlannerReporterGhostList[i - 1].invGoodsDemandList[1]
-            self.allFirmsDesiredCapitalSubstitutionsMultirank += \
-                theCentralPlannerReporterGhostList[i - 1].invGoodsDemandList[2]
-            self.allFirmsRequiredCapitalIncrementMultirank += \
-                theCentralPlannerReporterGhostList[i - 1].invGoodsDemandList[3]
-
-    # used if the proportionally option is active
     def setProportionalValue(self, model):
-        if model.rankNum == 1:
-            if (self.allFirmsDesiredCapitalSubstitutions + self.allFirmsRequiredCapitalIncrement) != 0:
-                self.proportionalValue = self.informationTable[model.t(), 0] \
-                                         / (
-                                                     self.allFirmsDesiredCapitalSubstitutions + self.allFirmsRequiredCapitalIncrement)
-
-        else:
-            if (
-                    self.allFirmsDesiredCapitalSubstitutionsMultirank + self.allFirmsRequiredCapitalIncrementMultirank) != 0:
-                self.proportionalValue = self.informationTableMultirank[0] \
-                                         / (
-                                                     self.allFirmsDesiredCapitalSubstitutionsMultirank + self.allFirmsRequiredCapitalIncrementMultirank)
+        if (self.globalFlows[6] + self.globalFlows[7]) != 0:
+            self.proportionalValue = self.globalFlows[0] / (self.globalFlows[6] + self.globalFlows[7])
 
     def executeInvestmentGoodsDemandFromFirms(self, model):
         for aFirm in model.context.agents(agent_type=self.params['FIRM_TYPE']):
@@ -333,8 +252,6 @@ class CentralPlanner(BasicAgent):
         basic_info = super().save()
 
         params = (
-            self.isGlobal,
-            self.paramGroup,
             self.proportionalValue,
         )
 
@@ -345,6 +262,4 @@ class CentralPlanner(BasicAgent):
         super().update(basic_info)
         if params is not None:
             (
-                self.isGlobal,
-                self.paramGroup,
                 self.proportionalValue) = params

@@ -7,18 +7,22 @@ from typing import Tuple, List, Dict
 class CentralBank(BasicAgent):
         # stock
     STOCK_AMOUNT = 2
-    DEPOSIT = 0
+    DEPOSIT_CB = 0
     RESERVE = 1
+    ADVANCE = 2
 
     # flow
     FLOW_AMOUNT = 2
     DEPOSIT_DELTA = 0
     RESERVE_DELTA = 1
     
-    def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int):
+    def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int,
+    advanceInterestRate:float):
         super().__init__(uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
         self.params = params
+
+        self.advanceInterestRate = advanceInterestRate
 
         self.globalStocks = np.zeros(self.STOCK_AMOUNT)
 
@@ -28,18 +32,19 @@ class CentralBank(BasicAgent):
         # local stock attributes
         self.localStocks = []
 
-        self.Deposits = []
+        self.DepositCBs = []
         self.Reserves = []
+        self.Advances = []
 
-        self.localStocks.append(self.Deposits)
+        self.localStocks.append(self.DepositCBs)
         self.localStocks.append(self.Reserves)
+        self.localStocks.append(self.Advances)
         # self.Loans = []
         # self.Advances = []
 
         # local flow attributes -- should be reset to 0 after the balance sheet
         self.localFlows = np.zeros(self.FLOW_AMOUNT)
 
-        self.reporterGhostList = []
 
     # def save(self):
     #     basic_info = super().save()

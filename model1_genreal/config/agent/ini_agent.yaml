@@ -7,6 +7,8 @@ CEN_PLANNER_REPORTER_TYPE: &CEN_PLANNER_REPORTER_TYPE 2
 COMM_BANK_TYPE: &COMM_BANK_TYPE 3
 CEN_BANK_TYPE: &CEN_BANK_TYPE 4
 
+CREDIT_MARKET_TYPE: &CREDIT_MARKET_TYPE 100
+
 # -------------- Agent Parameters ------------------
 agent_params:
   *COMM_BANK_TYPE:
@@ -14,11 +16,14 @@ agent_params:
     &default_bank 0:
       depositInterestRate: 0.001
       loanInterestRate: 0.0012
+      targetedLiquidityRatio: 0.17
+      capitalAdequacyRatio: 0.06
 
 
   *CEN_BANK_TYPE:
-    param_name: []
+    param_name: [advanceInterestRate]
     &default_cen_bank 0:
+      advanceInterestRate: 0.0001
 
   *CEN_PLANNER_TYPE:
     param_name: []
@@ -37,6 +42,12 @@ agent_params:
       #################################################
       #modify duration
       durationCoeff: 2
+
+
+  *CREDIT_MARKET_TYPE:
+    param_name: []
+    &default_credit_market 0:
+
 
 
 
@@ -82,3 +93,12 @@ agents:
           *default_cen_planner
         isGlobal: true
 
+
+  *CREDIT_MARKET_TYPE :
+    total_amount: 1
+    groups:
+      unique:
+        share: 1
+        paramGroup:
+          *default_credit_market
+        isGlobal: true

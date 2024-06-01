@@ -17,5 +17,5 @@ centralPlannerPriceCoefficient: 1 #must be 1 if usingMarkup == True
 
 
 
-
+loanObservationFrequency : 1
 

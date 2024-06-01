@@ -17,6 +17,7 @@ class BasicAgent(core.Agent, abc.ABC):
         self.localFlows = None
 
         self.reporterGhostList = []
+        self.counterPart = None
     
     # only call by reporter
     def getInformationTableData(self):
@@ -55,8 +56,6 @@ class BasicAgent(core.Agent, abc.ABC):
 
         # -- reset the delta to 0
         self.localFlows.fill(0)
-
-
 
 
     def save(self):

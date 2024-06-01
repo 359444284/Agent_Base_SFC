@@ -2,7 +2,7 @@ from repast4py import core
 import numpy as np
 from typing import Tuple, List, Dict
 
-class InformationReporter(core.Agent):
+class AgentReporter(core.Agent):
     
     def __init__(self, local_id: int, type_id:int, rank_id: int):
         super().__init__(id=local_id, type=type_id, rank=rank_id)

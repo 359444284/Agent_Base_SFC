@@ -1,5 +1,3 @@
-
-
 class Reserve:
     __slots__ = ['amount', 'assetHolder', 'liabilityHolder']
 

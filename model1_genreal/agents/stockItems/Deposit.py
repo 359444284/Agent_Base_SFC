@@ -1,5 +1,3 @@
-
-
 class Deposit:
     __slots__ = ['amount', 'assetHolder', 'liabilityHolder']
 
