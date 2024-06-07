@@ -17,26 +17,5 @@ centralPlannerPriceCoefficient: 1 #must be 1 if usingMarkup == True
 
 
 
+loanObservationFrequency : 1
 
-
-# Agent Type
-FIRM_TYPE: &FIRM_TYPE 0
-CEN_PLANNER_TYPE: &CEN_PLANNER_TYPE 1
-CEN_PLANNER_REPORTER_TYPE: &CEN_PLANNER_REPORTER_TYPE 2
-COMM_BANK_TYPE: &COMM_BANK_TYPE 3
-COMM_BANK_REPORTER_TYPE: &COMM_BANK_REPORTER_TYPE 4
-CEN_BANK_TYPE: &CEN_BANK_TYPE 5
-CEN_BANK_REPORTER_TYPE: &CEN_BANK_REPORTER_TYPE 6
-
-# Agent Type Number  
-agent_distribute_mode: 'mean'  
-agents_amount:
-  *FIRM_TYPE: 500
-  *COMM_BANK_TYPE: 6
-
-
-
-
-
-# Bank
-depositInterestRate: 0.0005

@@ -6,14 +6,21 @@ CEN_PLANNER_TYPE: &CEN_PLANNER_TYPE 1
 CEN_PLANNER_REPORTER_TYPE: &CEN_PLANNER_REPORTER_TYPE 2
 COMM_BANK_TYPE: &COMM_BANK_TYPE 3
 CEN_BANK_TYPE: &CEN_BANK_TYPE 4
+HOUSEHOLD_TYPE: &HOUSEHOLD_TYPE 5
 
 CREDIT_MARKET_TYPE: &CREDIT_MARKET_TYPE 100
+CONSUMPTION_MARKET_TYPE: &CONSUMPTION_MARKET_TYPE 101
 
-# -------------- Agent Parameters ------------------
+# -------------- Agent Parameters ------------------n
 agent_params:
   *COMM_BANK_TYPE:
     param_name: [depositInterestRate, loanInterestRate]
     &default_bank 0:
+#      depositInterestRate: 0.001
+#      loanInterestRate: 0.0012
+#      targetedLiquidityRatio: 0.17
+#      capitalAdequacyRatio: 0.06
+
       depositInterestRate: 0.001
       loanInterestRate: 0.0012
       targetedLiquidityRatio: 0.17
@@ -23,6 +30,7 @@ agent_params:
   *CEN_BANK_TYPE:
     param_name: [advanceInterestRate]
     &default_cen_bank 0:
+#      advanceInterestRate: 0.0001
       advanceInterestRate: 0.0001
 
   *CEN_PLANNER_TYPE:
@@ -43,11 +51,20 @@ agent_params:
       #modify duration
       durationCoeff: 2
 
+  *HOUSEHOLD_TYPE :
+    param_name: [ ]
+    &default_household 0:
+
 
   *CREDIT_MARKET_TYPE:
     param_name: []
     &default_credit_market 0:
+      nround: 1
 
+  *CONSUMPTION_MARKET_TYPE :
+    param_name: [ ]
+    &default_consumption_market 0:
+      nround: 10
 
 
 
@@ -84,6 +101,15 @@ agents:
           *default_cen_bank
         isGlobal: true
 
+  *HOUSEHOLD_TYPE :
+    total_amount: 100
+    groups:
+      local_household:
+        share: 1
+        paramGroup:
+          *default_household
+        isGlobal: False
+
   *CEN_PLANNER_TYPE:
     total_amount: 1
     groups:
@@ -93,7 +119,6 @@ agents:
           *default_cen_planner
         isGlobal: true
 
-
   *CREDIT_MARKET_TYPE :
     total_amount: 1
     groups:
@@ -101,4 +126,13 @@ agents:
         share: 1
         paramGroup:
           *default_credit_market
+        isGlobal: true
+
+  *CONSUMPTION_MARKET_TYPE :
+    total_amount: 1
+    groups:
+      unique:
+        share: 1
+        paramGroup:
+          *default_consumption_market
         isGlobal: true

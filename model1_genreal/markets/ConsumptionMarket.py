@@ -106,9 +106,7 @@ class ComsumptionMarket(core.Agent):
 
         for _ in range(self.nround):
 
-            for i, demander_uids in enumerate(self.globalCreditDemanders):
-                self.globalCreditDemanders[i] = [uid for uid in demander_uids if uid in alive_demander]
-                random.shuffle(self.globalCreditDemanders[i])
+            self.shuffle_demanders(alive_demander)
 
             demander_idx = [len(ls) for ls in self.globalCreditDemanders]
 
@@ -153,18 +151,24 @@ class ComsumptionMarket(core.Agent):
 
                         self.matched_info[demanderUid].append((supplierUid, totalValue, quantity))
 
-                        if self.globalDemandersInfo[demanderUid][0] == 0:
+                        if demanderInfo[0] == 0:
                             alive_demander.remove(demanderUid)
 
-                        if self.globalSuppliersInfo[supplierUid][0] == 0:
+                        if supplierInfo[0] == 0:
                             self.globalCreditSuppliers[rank_id].remove(supplierUid)
                             remind_supplier[rank_id] -= 1
                             if remind_supplier[rank_id] <= 0:
                                 demander_idx[rank_id] = 0
+
                     demander_idx[rank_id] -= 1
             # print(self.matched_info)
             if len(alive_demander) == 0 or sum(remind_supplier) == 0:
                 break
+
+    def shuffle_demanders(self, alive_demanders):
+        for i, demanders in enumerate(self.globalCreditDemanders):
+            self.globalCreditDemanders[i] = [uid for uid in demanders if uid in alive_demanders]
+            random.shuffle(self.globalCreditDemanders[i])
 
     def match_suppliers(self, rank_id, remind_suppliers):
         supplierUid = random.choice(self.globalCreditSuppliers[rank_id])

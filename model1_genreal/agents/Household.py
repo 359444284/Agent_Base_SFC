@@ -26,7 +26,7 @@ class Household(BasicAgent):
 
         self.isEmployed = False
         self.wage = 0
-        self.interestsReceived
+        self.interestsReceived = 0
 
         self.globalStocks = np.zeros(self.STOCK_AMOUNT)
 

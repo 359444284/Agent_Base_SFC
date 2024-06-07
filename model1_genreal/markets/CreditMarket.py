@@ -105,9 +105,7 @@ class CreditMarket(core.Agent):
 
         for _ in range(self.nround):
 
-            for i, demander_uids in enumerate(self.globalCreditDemanders):
-                self.globalCreditDemanders[i] = [uid for uid in demander_uids if uid in alive_demander]
-                random.shuffle(self.globalCreditDemanders[i])
+            self.shuffle_demanders(alive_demander)
 
             demander_idx = [len(ls) for ls in self.globalCreditDemanders]
 
@@ -134,15 +132,15 @@ class CreditMarket(core.Agent):
                     amount = max(0, min(offered, require))
 
                     if amount > 0:
-                        self.globalDemandersInfo[demanderUid][0] -= amount
-                        self.globalSuppliersInfo[supplierUid][0] -= amount
+                        demanderInfo[0] -= amount
+                        supplierInfo[0] -= amount
 
                         self.matched_info[demanderUid].append((supplierUid, amount))
 
-                        if self.globalDemandersInfo[demanderUid][0] == 0:
+                        if demanderInfo[0] == 0:
                             alive_demander.remove(demanderUid)
 
-                        if self.globalSuppliersInfo[supplierUid][0] == 0:
+                        if supplierInfo[0] == 0:
                             self.globalCreditSuppliers[rank_id].remove(supplierUid)
                             remind_supplier[rank_id] -= 1
                             if remind_supplier[rank_id] <= 0:
@@ -150,7 +148,11 @@ class CreditMarket(core.Agent):
 
                     demander_idx[rank_id] -= 1
 
-
+    # def process_demander
+    def shuffle_demanders(self, alive_demanders):
+        for i, demanders in enumerate(self.globalCreditDemanders):
+            self.globalCreditDemanders[i] = [uid for uid in demanders if uid in alive_demanders]
+            random.shuffle(self.globalCreditDemanders[i])
     def match_suppliers(self, rank_id, remind_suppliers):
         supplierUid = random.choice(self.globalCreditSuppliers[rank_id])
         while self.globalSuppliersInfo[supplierUid][0] == 0:
@@ -160,6 +162,7 @@ class CreditMarket(core.Agent):
                 remind_suppliers[rank_id] = 0
                 return None
             supplierUid = random.choice(self.globalCreditSuppliers[rank_id])
+
         return supplierUid
 
 

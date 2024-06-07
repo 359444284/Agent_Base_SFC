@@ -1,9 +1,9 @@
 class Loan():
-    __slots__ = ['amount', 'iniAmount', 'interestRate', 'startTick', 'length', 'age', 'ObservePeriod', 'assetHolder', 'liabilityHolder']
+    __slots__ = ['value', 'iniValue', 'interestRate', 'startTick', 'length', 'age', 'ObservePeriod', 'assetHolder', 'liabilityHolder']
 
-    def __init__(self, amount, interestRate, startTick, length, ObservePeriod, assetHolder, liabilityHolder):
-        self.amount = amount
-        self.iniAmount = amount
+    def __init__(self, value, interestRate, startTick, length, ObservePeriod, assetHolder, liabilityHolder):
+        self.value = value
+        self.iniValue = value
         self.interestRate = interestRate
         self.startTick = startTick
         self.length = length
