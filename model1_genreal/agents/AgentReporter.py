@@ -10,6 +10,7 @@ class AgentReporter(core.Agent):
 
         self.flowInfo = []  # superflous
         self.stockInfo = []
+
         self.connectAgent = None
 
 

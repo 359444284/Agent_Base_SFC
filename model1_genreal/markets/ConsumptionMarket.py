@@ -1,3 +1,4 @@
+import math
 import random
 from collections import defaultdict
 
@@ -5,7 +6,7 @@ import numpy as np
 from typing import Tuple, List, Dict
 from repast4py import core
 
-class CreditMarket(core.Agent):
+class ComsumptionMarket(core.Agent):
 
     def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int,
                  nround:int):
@@ -119,8 +120,10 @@ class CreditMarket(core.Agent):
                     demanderUid = self.globalCreditDemanders[rank_id][demander_idx[rank_id] - 1]
                     demanderInfo = self.globalDemandersInfo[demanderUid]
 
-                    require = demanderInfo[0]
-                    if require <= 0:
+                    demandQuantity = demanderInfo[0]
+                    demandAsset = demanderInfo[1]
+
+                    if demandQuantity or demandAsset <= 0:
                         alive_demander.remove(demanderUid)
                         demander_idx[rank_id] -= 1
                         continue
@@ -130,14 +133,25 @@ class CreditMarket(core.Agent):
                         break
                     supplierInfo = self.globalSuppliersInfo[supplierUid]
 
-                    offered = supplierInfo[0]
-                    amount = max(0, min(offered, require))
+                    offeredAmount = supplierInfo[0]
+                    price = supplierInfo[1]  # currently price is 1
+                    offerValue = offeredAmount * price
 
-                    if amount > 0:
-                        self.globalDemandersInfo[demanderUid][0] -= amount
-                        self.globalSuppliersInfo[supplierUid][0] -= amount
+                    quantity = min(offeredAmount, demandQuantity)
+                    totalValue = offerValue
 
-                        self.matched_info[demanderUid].append((supplierUid, amount))
+                    if offerValue > demandAsset:
+                        quantity = math.floor(demandAsset/price)
+                        totalValue = quantity * price
+                        demander_idx[rank_id] -= 1
+
+                    if quantity > 0:
+                        self.globalDemandersInfo[demanderUid][0] -= quantity
+                        self.globalDemandersInfo[demanderUid][1] -= totalValue
+
+                        self.globalSuppliersInfo[supplierUid][0] -= quantity
+
+                        self.matched_info[demanderUid].append((supplierUid, totalValue, quantity))
 
                         if self.globalDemandersInfo[demanderUid][0] == 0:
                             alive_demander.remove(demanderUid)
@@ -147,9 +161,10 @@ class CreditMarket(core.Agent):
                             remind_supplier[rank_id] -= 1
                             if remind_supplier[rank_id] <= 0:
                                 demander_idx[rank_id] = 0
-
                     demander_idx[rank_id] -= 1
-
+            # print(self.matched_info)
+            if len(alive_demander) == 0 or sum(remind_supplier) == 0:
+                break
 
     def match_suppliers(self, rank_id, remind_suppliers):
         supplierUid = random.choice(self.globalCreditSuppliers[rank_id])
@@ -164,10 +179,10 @@ class CreditMarket(core.Agent):
 
 
     def save(self):
-        return (self.uid, (self.isGlobal, self.paramGroup, self.matched_info, self.active))
+        return (self.uid, (self.isGlobal, self.paramGroup, self.matched_info))
 
     def update(self, basic_info):
-        self.isGlobal, self.paramGroup, self.matched_info, self.active = basic_info
+        self.isGlobal, self.paramGroup, self.matched_info = basic_info
 
 
 

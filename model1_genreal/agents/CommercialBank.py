@@ -12,11 +12,9 @@ class CommercialBank(BasicAgent):
     LOAN = 3
 
     # flow
-    FLOW_AMOUNT = 4
-    DEPOSIT_DELTA = 0
-    RESERVE_DELTA = 1
-    INTEREST_DEPOSIT = 2
-    INTEREST_LOAN = 3
+    FLOW_AMOUNT = 2
+    INTEREST_DEPOSIT = 0
+    INTEREST_LOAN = 1
 
     
     def __init__(self, uid: Tuple, params:dict, isGlobal: bool, paramGroup: int,
@@ -58,47 +56,50 @@ class CommercialBank(BasicAgent):
 
         # -------------------------
 
-        self.myBalancesheet = np.zeros((params['howManyCycles'], 8))
+        self.myBalancesheet = np.zeros((params['howManyCycles'], 7))
     
 
-    def transfer(self, sourceDeposit, targetDeposit, amount):
+    def transfer(self, sourceDeposit, targetDeposit, value):
         sourceBank = sourceDeposit.liabilityHolder
         targetBank = targetDeposit.liabilityHolder
 
         sourceBankReserve = sourceBank.Reserves[0]
         targetBankReserve = targetBank.Reserves[0]
 
-        sourceDeposit.amount -= amount
-        sourceBankReserve.amount -= amount
-        sourceBank.localFlows[self.DEPOSIT_DELTA] -= amount
-        sourceBank.localFlows[self.RESERVE_DELTA] -= amount
+        sourceDeposit.value -= value
+        targetDeposit.value += value
+        # sourceBank.localFlows[self.DEPOSIT_DELTA] -= value
+        # targetBank.localFlows[self.DEPOSIT_DELTA] += value
 
-        targetDeposit.amount += amount
-        targetBankReserve.amount += amount
-        targetBank.localFlows[self.DEPOSIT_DELTA] += amount
-        targetBank.localFlows[self.RESERVE_DELTA] += amount
+        if sourceBank != targetBank:
+            sourceBankReserve.value -= value
+            targetBankReserve.value += value
+            # sourceBank.localFlows[self.RESERVE_DELTA] -= value
+            # targetBank.localFlows[self.RESERVE_DELTA] += value
 
     def payDepositInterests(self):
         for deposit in self.Deposits:
             depositor = deposit.assetHolder
-            payInterests = self.depositInterestRate * deposit.amount
+            payInterests = self.depositInterestRate * deposit.value
             self.localFlows[self.INTEREST_DEPOSIT] += payInterests
             # depositor.localFlows[depositor.INTEREST_DEPOSIT] += payInterests
-            deposit.amount += payInterests
+            deposit.value += payInterests
 
     def getNetWealth(self):
         return self.globalStocks[self.LOAN] + self.globalStocks[self.RESERVE] - self.globalStocks[self.ADVANCE] - self.globalStocks[self.DEPOSIT]
 
     def getCreditSupply(self):
-        # capitalsValue = self.getNetWealth()
+        capitalsValue = self.getNetWealth()
 
-        capitalsValue = self.globalStocks[self.DEPOSIT]
+        # capitalsValue = self.globalStocks[self.DEPOSIT]
 
         desiredLoansStock = max(capitalsValue*0.6, 0)
 
         currentLoans = self.globalStocks[self.LOAN]
 
-        newLoansSupply = desiredLoansStock - currentLoans
+        newLoansSupply = max(desiredLoansStock - currentLoans, 0)
+
+        # newLoansSupply = 60
 
         self.loanSupply = newLoansSupply
 
@@ -121,28 +122,30 @@ class CommercialBank(BasicAgent):
             timeDiff = currentTime - advance.startTick
             if timeDiff % advance.ObservePeriod == 0 and timeDiff > 0:
                 
-                interest = advance.interestRate * advance.amount
-                principal = advance.iniAmount/advance.length
+                interest = advance.interestRate * advance.value
+                principal = advance.iniValue/advance.length
 
                 self.localFlows[self.INTEREST_LOAN] += interest
 
                 
-                reserve.amount -= interest + principal
-                advance.amount -= principal
+                reserve.value -= interest + principal
+                advance.value -= principal
                 advance.age -= 1
         
 
     def makeBalancesheet(self, currentTime):
 
+        netWealth = self.getNetWealth()
         self.myBalancesheet[currentTime, 0] = self.globalStocks[self.DEPOSIT]
         self.myBalancesheet[currentTime, 1] = self.globalStocks[self.RESERVE]
         self.myBalancesheet[currentTime, 2] = self.globalStocks[self.ADVANCE]
         self.myBalancesheet[currentTime, 3] = self.globalStocks[self.LOAN]
 
-        self.myBalancesheet[currentTime, 4] = self.globalFlows[self.DEPOSIT_DELTA]
-        self.myBalancesheet[currentTime, 5] = self.globalFlows[self.RESERVE_DELTA]
-        self.myBalancesheet[currentTime, 6] = self.globalFlows[self.INTEREST_DEPOSIT]
-        self.myBalancesheet[currentTime, 7] = self.globalFlows[self.INTEREST_LOAN]
+        self.myBalancesheet[currentTime, 4] = self.globalFlows[self.INTEREST_DEPOSIT]
+        self.myBalancesheet[currentTime, 5] = self.globalFlows[self.INTEREST_LOAN]
+
+
+        self.myBalancesheet[currentTime, 6] = netWealth
 
         self.globalFlows.fill(0)
         self.localFlows.fill(0)
@@ -151,10 +154,19 @@ class CommercialBank(BasicAgent):
         self.cleanAdvance()
 
     def cleanAdvance(self):
+        # to_remove = []
+        # for advance in self.Advances:
+        #     if advance.value == 0 or advance.age <= 0:
+        #         to_remove.append(advance)
+        #
+        # for advance in to_remove:
+        #     advance.liabilityHolder.Advances.remove(advance)
+        #     self.Advances.remove(advance)
+
         for i in range(len(self.Advances) - 1, -1, -1):
-            if self.Advances[i].amount == 0 or self.Advances[i].age <= 0:
+            if self.Advances[i].value == 0 or self.Advances[i].age <= 0:
                 advance = self.Advances[i]
-                advance.liabilityHolder.Advances.remove(advance)
+                advance.assetHolder.Advances.remove(advance)
                 self.Advances.pop(i)
 
             

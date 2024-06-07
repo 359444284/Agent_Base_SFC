@@ -144,11 +144,14 @@ class CentralPlanner(BasicAgent):
             (desiredCapitalQsubstitutions, requiredCapitalQincrement, \
              desiredCapitalSubstitutions, requiredCapitalIncrement) = aFirm.allowInformationToCentralPlanner()
 
+
             # TOTALIZING INVESTMENT GOODS REQUESTS
             self.localFlows[4] += desiredCapitalQsubstitutions
             self.localFlows[5] += requiredCapitalQincrement
             self.localFlows[6] += desiredCapitalSubstitutions
             self.localFlows[7] += requiredCapitalIncrement
+
+        # print(self.localFlows[4:8])
 
 
         self.informationTable[model.t(), 4] = self.localFlows[6] + self.localFlows[7]

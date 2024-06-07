@@ -38,7 +38,7 @@ class BasicAgent(core.Agent, abc.ABC):
 
         for i, stockType in enumerate(stocks):
             for stock in stockType:
-                counter[i] += stock.amount
+                counter[i] += stock.value
         
         return counter
     
@@ -60,9 +60,9 @@ class BasicAgent(core.Agent, abc.ABC):
 
     def save(self):
         return (self.uid, 
-               (self.globalStocks, self.globalFlows, self.isGlobal, self.paramGroup)
+               (self.isGlobal, self.paramGroup, self.globalStocks, self.globalFlows)
                )
 
     def update(self, basic_info):
-        self.globalStocks, self.globalFlows, self.isGlobal, self.paramGroup = basic_info
+        self.isGlobal, self.paramGroup, self.globalStocks, self.globalFlows = basic_info
     
