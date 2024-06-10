@@ -41,8 +41,7 @@ class CreditMarket(core.Agent):
         # list of uid
         self.creditSuppliers = []
 
-        # {demainderUid, [supplyerUid, amount]}
-        self.matched_info = defaultdict(list)
+        self.matched_info = None
 
         self.reporterGhostList = []
 
@@ -90,8 +89,8 @@ class CreditMarket(core.Agent):
         for theReporterGhost in self.reporterGhostList:
             self.globalDemandersInfo |= theReporterGhost.demandersInfo
             self.globalSuppliersInfo |= theReporterGhost.suppliersInfo
-            self.globalCreditDemanders.append(theReporterGhost.creditDemanders)
-            self.globalCreditSuppliers.append(theReporterGhost.creditSuppliers)
+            self.globalCreditDemanders.append(theReporterGhost.demandersUid)
+            self.globalCreditSuppliers.append(theReporterGhost.suppliersUid)
 
         self.localSuppliersInfo = {}
         self.localDemandersInfo = {}
@@ -99,7 +98,9 @@ class CreditMarket(core.Agent):
         self.creditSuppliers = []
 
     def excute(self):
-        self.matched_info.clear()
+        # {demainderUid, [supplyerUid, amount]} for each rank
+        self.matched_info = [defaultdict(list) for _ in range(len(self.globalCreditSuppliers))]
+
         alive_demander = set(self.globalDemandersInfo.keys())
         remind_supplier = [len(ls) for ls in self.globalCreditSuppliers]
 
@@ -135,7 +136,7 @@ class CreditMarket(core.Agent):
                         demanderInfo[0] -= amount
                         supplierInfo[0] -= amount
 
-                        self.matched_info[demanderUid].append((supplierUid, amount))
+                        self.matched_info[rank_id][demanderUid].append((supplierUid, (amount)))
 
                         if demanderInfo[0] == 0:
                             alive_demander.remove(demanderUid)
