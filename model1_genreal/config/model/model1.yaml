@@ -13,7 +13,7 @@ investmentGoods: [1] #list of type of investment goods (must be consistent with 
 minOfInventoriesBeingSold: 0.75
 rangeOfInventoriesBeingSold: 0.25 #must be complement to 1 with the above minOfInventoriesBeingSold
 usingMarkup: True
-centralPlannerPriceCoefficient: 1 #must be 1 if usingMarkup == True
+centralPlannerPriceCoefficient: 1.0 #must be 1 if usingMarkup == True
 
 
 

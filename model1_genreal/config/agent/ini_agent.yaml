@@ -52,8 +52,9 @@ agent_params:
       durationCoeff: 2
 
   *HOUSEHOLD_TYPE :
-    param_name: [ ]
+    param_name: []
     &default_household 0:
+
 
 
   *CREDIT_MARKET_TYPE:

@@ -137,6 +137,8 @@ class CentralPlanner(BasicAgent):
                                           + model.rng.random() * self.params['rangeOfInventoriesBeingSold']
             centralPlannerBuyingPriceCoefficient = self.params['centralPlannerPriceCoefficient']  # 0.8 + rng.random()*0.4
             aFirm.receiveSellingOrders(shareOfInventoriesBeingSold, centralPlannerBuyingPriceCoefficient)
+            aFirm.tmpshareOfInventoriesBeingSold = shareOfInventoriesBeingSold
+            aFirm.tmpcentralPlannerBuyingPriceCoefficient = centralPlannerBuyingPriceCoefficient
 
     def askFirmsInvGoodsDemand(self, model):
 

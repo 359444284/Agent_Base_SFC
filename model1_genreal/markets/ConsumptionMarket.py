@@ -34,24 +34,23 @@ class ComsumptionMarket(core.Agent):
 
         # Demander vs Supplier : one to many
         #
-        self.globalCreditDemanders = []
-        self.globalCreditSuppliers = []
+        self.globalDemandersUid = []
+        self.globalSuppliersUid = []
 
         # list of uid
-        self.creditDemanders = []
+        self.demandersUid = []
         # list of uid
-        self.creditSuppliers = []
+        self.suppliersUid = []
 
-        # {demainderUid, [supplyerUid, amount]}
-        self.matched_info = defaultdict(list)
+        self.matched_info = None
 
         self.reporterGhostList = []
 
     def collectSupplyer(self, supplierList):
-        self.creditSuppliers = supplierList
+        self.suppliersUid = supplierList
 
     def collectDemander(self, demandList):
-        self.creditDemanders = demandList
+        self.demandersUid = demandList
 
     def collectSupplyInfo(self, uid, info):
         self.localSuppliersInfo[uid] = info
@@ -64,98 +63,104 @@ class ComsumptionMarket(core.Agent):
         aggrate_data = (
             self.localDemandersInfo.copy(),
             self.localSuppliersInfo.copy(),
-            self.creditDemanders.copy(),
-            self.creditSuppliers.copy(),
+            self.demandersUid.copy(),
+            self.suppliersUid.copy(),
             )
 
         # -- reset the delta to 0
         self.localSuppliersInfo = {}
         self.localDemandersInfo = {}
-        self.creditDemanders = []
-        self.creditSuppliers = []
+        self.demandersUid = []
+        self.suppliersUid = []
 
         return aggrate_data
 
     def mergeInformationTableData(self):
         self.globalDemandersInfo = {}
         self.globalSuppliersInfo = {}
-        self.globalCreditDemanders = []
-        self.globalCreditSuppliers = []
+        self.globalDemandersUid = []
+        self.globalSuppliersUid = []
 
         self.globalSuppliersInfo |= self.localSuppliersInfo
         self.globalDemandersInfo |= self.localDemandersInfo
 
-        self.globalCreditDemanders.append(self.creditDemanders)
-        self.globalCreditSuppliers.append(self.creditSuppliers)
+        self.globalDemandersUid.append(self.demandersUid)
+        self.globalSuppliersUid.append(self.suppliersUid)
 
         for theReporterGhost in self.reporterGhostList:
             self.globalDemandersInfo |= theReporterGhost.demandersInfo
             self.globalSuppliersInfo |= theReporterGhost.suppliersInfo
-            self.globalCreditDemanders.append(theReporterGhost.creditDemanders)
-            self.globalCreditSuppliers.append(theReporterGhost.creditSuppliers)
+            self.globalDemandersUid.append(theReporterGhost.demandersUid)
+            self.globalSuppliersUid.append(theReporterGhost.suppliersUid)
 
         self.localSuppliersInfo = {}
         self.localDemandersInfo = {}
-        self.creditDemanders = []
-        self.creditSuppliers = []
+        self.demandersUid = []
+        self.suppliersUid = []
 
     def excute(self):
-        self.matched_info.clear()
+        # {demainderUid, [supplyerUid, amount]} for each rank
+        self.matched_info = [defaultdict(list) for _ in range(len(self.globalSuppliersUid))]
+
         alive_demander = set(self.globalDemandersInfo.keys())
-        remind_supplier = [len(ls) for ls in self.globalCreditSuppliers]
+        remind_supplier = [len(ls) for ls in self.globalSuppliersUid]
 
         for _ in range(self.nround):
 
             self.shuffle_demanders(alive_demander)
 
-            demander_idx = [len(ls) for ls in self.globalCreditDemanders]
+            demander_idx = [len(ls) for ls in self.globalDemandersUid]
 
             while any(d * s > 0 for d, s in zip(demander_idx, remind_supplier)):
                 for rank_id in range(len(demander_idx)):
                     if demander_idx[rank_id] <= 0 or remind_supplier[rank_id] <= 0:
                         continue
 
-                    demanderUid = self.globalCreditDemanders[rank_id][demander_idx[rank_id] - 1]
+                    demanderUid = self.globalDemandersUid[rank_id][demander_idx[rank_id] - 1]
                     demanderInfo = self.globalDemandersInfo[demanderUid]
 
                     demandQuantity = demanderInfo[0]
                     demandAsset = demanderInfo[1]
 
-                    if demandQuantity or demandAsset <= 0:
+                    if demandQuantity <= 0 or demandAsset <= 0:
                         alive_demander.remove(demanderUid)
                         demander_idx[rank_id] -= 1
                         continue
+
+
 
                     supplierUid = self.match_suppliers(rank_id, remind_supplier)
                     if supplierUid is None:
                         break
                     supplierInfo = self.globalSuppliersInfo[supplierUid]
 
-                    offeredAmount = supplierInfo[0]
-                    price = supplierInfo[1]  # currently price is 1
-                    offerValue = offeredAmount * price
+                    price = supplierInfo[0]  # currently price is 1
+                    offeredQuantity = supplierInfo[1]
+                    offerValue = offeredQuantity * price
 
-                    quantity = min(offeredAmount, demandQuantity)
+
+                    quantity = min(offeredQuantity, demandQuantity)
                     totalValue = offerValue
 
                     if offerValue > demandAsset:
-                        quantity = math.floor(demandAsset/price)
+                        # quantity = math.floor(demandAsset/price)
+                        quantity = demandAsset/price
                         totalValue = quantity * price
                         demander_idx[rank_id] -= 1
 
                     if quantity > 0:
-                        self.globalDemandersInfo[demanderUid][0] -= quantity
-                        self.globalDemandersInfo[demanderUid][1] -= totalValue
+                        demanderInfo[0] -= quantity
+                        demanderInfo[1] -= totalValue
 
-                        self.globalSuppliersInfo[supplierUid][0] -= quantity
+                        supplierInfo[1] -= quantity
 
-                        self.matched_info[demanderUid].append((supplierUid, totalValue, quantity))
+                        self.matched_info[rank_id][demanderUid].append((supplierUid, (price, quantity)))
 
-                        if demanderInfo[0] == 0:
+                        if demanderInfo[0] == 0 or demanderInfo[1] == 0:
                             alive_demander.remove(demanderUid)
 
-                        if supplierInfo[0] == 0:
-                            self.globalCreditSuppliers[rank_id].remove(supplierUid)
+                        if supplierInfo[1] == 0:
+                            self.globalSuppliersUid[rank_id].remove(supplierUid)
                             remind_supplier[rank_id] -= 1
                             if remind_supplier[rank_id] <= 0:
                                 demander_idx[rank_id] = 0
@@ -166,27 +171,27 @@ class ComsumptionMarket(core.Agent):
                 break
 
     def shuffle_demanders(self, alive_demanders):
-        for i, demanders in enumerate(self.globalCreditDemanders):
-            self.globalCreditDemanders[i] = [uid for uid in demanders if uid in alive_demanders]
-            random.shuffle(self.globalCreditDemanders[i])
+        for i, demanders in enumerate(self.globalDemandersUid):
+            self.globalDemandersUid[i] = [uid for uid in demanders if uid in alive_demanders]
+            random.shuffle(self.globalDemandersUid[i])
 
     def match_suppliers(self, rank_id, remind_suppliers):
-        supplierUid = random.choice(self.globalCreditSuppliers[rank_id])
+        supplierUid = random.choice(self.globalSuppliersUid[rank_id])
         while self.globalSuppliersInfo[supplierUid][0] == 0:
-            self.globalCreditSuppliers[rank_id].remove(supplierUid)
+            self.globalSuppliersUid[rank_id].remove(supplierUid)
             remind_suppliers[rank_id] -= 1
             if remind_suppliers[rank_id] <= 0:
                 remind_suppliers[rank_id] = 0
                 return None
-            supplierUid = random.choice(self.globalCreditSuppliers[rank_id])
+            supplierUid = random.choice(self.globalSuppliersUid[rank_id])
         return supplierUid
 
-
     def save(self):
-        return (self.uid, (self.isGlobal, self.paramGroup, self.matched_info))
+        return self.uid, (self.isGlobal, self.paramGroup, self.matched_info)
 
     def update(self, basic_info):
         self.isGlobal, self.paramGroup, self.matched_info = basic_info
+
 
 
 

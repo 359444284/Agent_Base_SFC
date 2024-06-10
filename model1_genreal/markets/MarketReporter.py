@@ -10,13 +10,13 @@ class MarketReporter(core.Agent):
 
         self.demandersInfo = {}
         self.suppliersInfo = {}
-        self.creditDemanders = []
-        self.creditSuppliers = []
+        self.demandersUid = []
+        self.suppliersUid = []
 
         self.connectAgent = None
 
     def reciveInformationLastCol(self):
-        self.demandersInfo, self.suppliersInfo, self.creditDemanders, self.creditSuppliers = self.connectAgent.getInformationTableData()
+        self.demandersInfo, self.suppliersInfo, self.demandersUid, self.suppliersUid = self.connectAgent.getInformationTableData()
 
     def save(self) -> Tuple:  # mandatory, used by request_agents and by synchronizazion
         """
@@ -29,9 +29,9 @@ class MarketReporter(core.Agent):
         # save output in update internal structure /fixed in v. 1.1.2???)
         # return (self.uid,(self.informationTable,)) #the comma is relevant for positional reasons
         # print(rank, "save",self.informationTableLastCol,flush=True)
-        return (self.uid, (self.demandersInfo, self.suppliersInfo, self.creditDemanders, self.creditSuppliers))
+        return (self.uid, (self.demandersInfo, self.suppliersInfo, self.demandersUid, self.suppliersUid))
 
     def update(self, dynState: Tuple):  # mandatory, used by synchronize
         # print(rank, "updt",dynState,flush=True)
         # print("from reporter upddat, rank=",rank,"t=",t(),dynState,flush=True)
-        self.demandersInfo, self.suppliersInfo, self.creditDemanders, self.creditSuppliers = dynState
+        self.demandersInfo, self.suppliersInfo, self.demandersUid, self.suppliersUid = dynState

@@ -44,7 +44,6 @@ class BasicAgent(core.Agent, abc.ABC):
     
 
     def mergeInformationTableData(self):
-        # if rank == self.uid[2]:
 
         self.globalStocks = self.aggrigateStocks(self.localStocks)
 
