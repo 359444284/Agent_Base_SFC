@@ -77,7 +77,7 @@ agent_distribute_mode: mean
 
 agents:
   *COMM_BANK_TYPE:
-    total_amount: 10
+    total_amount: 100
     groups:
       local_banks:
         share: 0.2
@@ -103,7 +103,7 @@ agents:
         isGlobal: true
 
   *HOUSEHOLD_TYPE :
-    total_amount: 100
+    total_amount: 1000
     groups:
       local_household:
         share: 1
