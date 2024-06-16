@@ -1,6 +1,6 @@
 # initital agent for each rank
 
-# Agent Type
+# Agent Type:  0 <= Type < 1000
 FIRM_TYPE: &FIRM_TYPE 0
 CEN_PLANNER_TYPE: &CEN_PLANNER_TYPE 1
 CEN_PLANNER_REPORTER_TYPE: &CEN_PLANNER_REPORTER_TYPE 2
@@ -10,6 +10,7 @@ HOUSEHOLD_TYPE: &HOUSEHOLD_TYPE 5
 
 CREDIT_MARKET_TYPE: &CREDIT_MARKET_TYPE 100
 CONSUMPTION_MARKET_TYPE: &CONSUMPTION_MARKET_TYPE 101
+LABOR_MARKET_TYPE: &LABOR_MARKET_TYPE 102
 
 # -------------- Agent Parameters ------------------n
 agent_params:
@@ -26,6 +27,9 @@ agent_params:
       targetedLiquidityRatio: 0.17
       capitalAdequacyRatio: 0.06
 
+  *HOUSEHOLD_TYPE :
+    param_name: []
+    &default_household 0:
 
   *CEN_BANK_TYPE:
     param_name: [advanceInterestRate]
@@ -51,11 +55,6 @@ agent_params:
       #modify duration
       durationCoeff: 2
 
-  *HOUSEHOLD_TYPE :
-    param_name: []
-    &default_household 0:
-
-
 
   *CREDIT_MARKET_TYPE:
     param_name: []
@@ -67,24 +66,36 @@ agent_params:
     &default_consumption_market 0:
       nround: 10
 
+  *LABOR_MARKET_TYPE :
+    param_name: [ ]
+    &default_labor_market 0:
+      nround: 10
 
 
 
-#  ------------- create agents ----------------------
+
+
+# mean or specific distribution of agents
 agent_distribute_mode: mean
 
 
+#  ------------- create not unique agents （Each core has the same distribution） ----------------------
+# total_amount: Total number of agent for the overall system (all machine)
+# rank_weight: Ratio of number of agents per rank : (not fill) or list[rankNum]
+# local_distribute： Distribution of different types of agents in each rank
 
-agents:
+ini_agents_uniform:
   *COMM_BANK_TYPE:
     total_amount: 100
-    groups:
+    rank_weight:
+    local_distribute:
       local_banks:
         share: 0.2
         paramGroup:
           # parameter group
           *default_bank
         isGlobal: false
+
 
       global_banks:
         share: 0.8
@@ -93,47 +104,159 @@ agents:
           *default_bank
         isGlobal: true
 
-  *CEN_BANK_TYPE:
-    total_amount: 1
-    groups:
-      unique:
-        share: 1
-        paramGroup:
-          *default_cen_bank
-        isGlobal: true
-
   *HOUSEHOLD_TYPE :
     total_amount: 1000
-    groups:
+    rank_weight:
+    local_distribute:
       local_household:
         share: 1
         paramGroup:
           *default_household
         isGlobal: False
 
-  *CEN_PLANNER_TYPE:
-    total_amount: 1
-    groups:
-      unique:
-        share: 1
-        paramGroup:
-          *default_cen_planner
-        isGlobal: true
+#  ------------------------- create not unique agent for each rank separately-------------------------
+ini_agents_specific:
+  0:
+    *COMM_BANK_TYPE :
+      total_amount: 25
+      local_distribute:
+        local_banks:
+          share: 0.2
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: false
+
+        global_banks:
+          share: 0.8
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: true
+
+    *HOUSEHOLD_TYPE :
+      total_amount: 250
+      local_distribute:
+        local_household:
+          share: 1
+          paramGroup:
+            *default_household
+          isGlobal: False
+
+  1:
+    *COMM_BANK_TYPE :
+      total_amount: 25
+      local_distribute:
+        local_banks:
+          share: 0.2
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: false
+
+        global_banks:
+          share: 0.8
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: true
+
+    *HOUSEHOLD_TYPE :
+      total_amount: 250
+      local_distribute:
+        local_household:
+          share: 1
+          paramGroup:
+            *default_household
+          isGlobal: False
+
+  2:
+    *COMM_BANK_TYPE :
+      total_amount: 25
+      local_distribute:
+        local_banks:
+          share: 0.2
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: false
+
+        global_banks:
+          share: 0.8
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: true
+
+    *HOUSEHOLD_TYPE :
+      total_amount: 250
+      local_distribute:
+        local_household:
+          share: 1
+          paramGroup:
+            *default_household
+          isGlobal: False
+
+  3:
+    *COMM_BANK_TYPE :
+      total_amount: 25
+      local_distribute:
+        local_banks:
+          share: 0.2
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: false
+
+        global_banks:
+          share: 0.8
+          paramGroup:
+            # parameter group
+            *default_bank
+          isGlobal: true
+
+    *HOUSEHOLD_TYPE :
+      total_amount: 250
+      local_distribute:
+        local_household:
+          share: 1
+          paramGroup:
+            *default_household
+          isGlobal: False
+
+
+#  ------------------------- create unique agents  ----------------------
+#  if agent need to communicate with other machines, isGlobal should be true else false
+#  if isGlobal is true, it will greate a unique global agent in specific_rank (default is 0)
+#  otherwise, it will create a unique agent in each rank
+
+ini_agents_unique:
+  *CEN_BANK_TYPE :
+    isGlobal: true
+    specific_rank:
+    paramGroup:
+      [*default_cen_bank]
+
+  *CEN_PLANNER_TYPE :
+    isGlobal: true
+    specific_rank:
+    paramGroup:
+      [*default_cen_planner]
 
   *CREDIT_MARKET_TYPE :
-    total_amount: 1
-    groups:
-      unique:
-        share: 1
-        paramGroup:
-          *default_credit_market
-        isGlobal: true
+    isGlobal: true
+    specific_rank:
+    paramGroup:
+      [*default_credit_market]
 
   *CONSUMPTION_MARKET_TYPE :
-    total_amount: 1
-    groups:
-      unique:
-        share: 1
-        paramGroup:
-          *default_consumption_market
-        isGlobal: true
+    isGlobal: false
+    specific_rank:
+    paramGroup:
+      [*default_consumption_market]
+
+  *LABOR_MARKET_TYPE :
+    isGlobal: false
+    specific_rank:
+    paramGroup:
+      [*default_labor_market]

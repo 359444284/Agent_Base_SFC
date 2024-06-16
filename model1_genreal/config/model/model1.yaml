@@ -15,7 +15,7 @@ rangeOfInventoriesBeingSold: 0.25 #must be complement to 1 with the above minOfI
 usingMarkup: True
 centralPlannerPriceCoefficient: 1.0 #must be 1 if usingMarkup == True
 
-
-
+#0.9467354673552263,100 100 1000
+#0:8312437129805477, 1000 100 1000
 loanObservationFrequency : 1
 

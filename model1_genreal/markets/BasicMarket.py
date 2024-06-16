@@ -94,6 +94,12 @@ class BasicMarket(core.Agent, ABC):
         self.localDemanderUids = []
         self.localSupplierUids = []
 
+    def getMatchResult(self, rank):
+        if self.isGlobal:
+            return self.matched_info[rank]
+        else:
+            return self.matched_info[0]
+
     # process each rank's market sequentially. Each rank has equal opportunity to interact with global agents
     def execute(self):
         self.matched_info = [defaultdict(list) for _ in range(len(self.globalDemanderUids))]
