@@ -27,7 +27,7 @@ agent_params:
       targetedLiquidityRatio: 0.17
       capitalAdequacyRatio: 0.06
 
-  *HOUSEHOLD_TYPE :
+  *HOUSEHOLD_TYPE:
     param_name: []
     &default_household 0:
 
@@ -72,6 +72,27 @@ agent_params:
       nround: 10
 
 
+agent_resources:
+  *COMM_BANK_TYPE:
+    &default_bank_resource 0:
+      rs_max: 1000
+      rs_min: 1000
+
+  *HOUSEHOLD_TYPE:
+    &default_household_resource 0:
+      dp_max: 100
+      dp_min: 100
+
+  *CEN_BANK_TYPE:
+    &default_cen_bank_resource 0:
+
+  *CEN_PLANNER_TYPE:
+    &default_cen_planner_resource 0:
+      dp: 10000
+
+
+
+
 
 
 
@@ -94,6 +115,8 @@ ini_agents_uniform:
         paramGroup:
           # parameter group
           *default_bank
+        resourceGroup:
+          *default_bank_resource
         isGlobal: false
 
 
@@ -102,6 +125,8 @@ ini_agents_uniform:
         paramGroup:
           # parameter group
           *default_bank
+        resourceGroup:
+          *default_bank_resource
         isGlobal: true
 
   *HOUSEHOLD_TYPE :
@@ -112,116 +137,154 @@ ini_agents_uniform:
         share: 1
         paramGroup:
           *default_household
+        resourceGroup:
+          *default_household_resource
         isGlobal: False
 
 #  ------------------------- create not unique agent for each rank separately-------------------------
 ini_agents_specific:
   0:
-    *COMM_BANK_TYPE :
+    *COMM_BANK_TYPE:
       total_amount: 25
+      rank_weight:
       local_distribute:
         local_banks:
           share: 0.2
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: false
+
 
         global_banks:
           share: 0.8
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: true
 
     *HOUSEHOLD_TYPE :
       total_amount: 250
+      rank_weight:
       local_distribute:
         local_household:
           share: 1
           paramGroup:
             *default_household
+          resourceGroup:
+            *default_household_resource
           isGlobal: False
 
   1:
-    *COMM_BANK_TYPE :
+    *COMM_BANK_TYPE:
       total_amount: 25
+      rank_weight:
       local_distribute:
         local_banks:
           share: 0.2
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: false
+
 
         global_banks:
           share: 0.8
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: true
 
     *HOUSEHOLD_TYPE :
       total_amount: 250
+      rank_weight:
       local_distribute:
         local_household:
           share: 1
           paramGroup:
             *default_household
+          resourceGroup:
+            *default_household_resource
           isGlobal: False
 
   2:
-    *COMM_BANK_TYPE :
+    *COMM_BANK_TYPE:
       total_amount: 25
+      rank_weight:
       local_distribute:
         local_banks:
           share: 0.2
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: false
+
 
         global_banks:
           share: 0.8
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: true
 
     *HOUSEHOLD_TYPE :
       total_amount: 250
+      rank_weight:
       local_distribute:
         local_household:
           share: 1
           paramGroup:
             *default_household
+          resourceGroup:
+            *default_household_resource
           isGlobal: False
 
   3:
-    *COMM_BANK_TYPE :
+    *COMM_BANK_TYPE:
       total_amount: 25
+      rank_weight:
       local_distribute:
         local_banks:
           share: 0.2
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: false
+
 
         global_banks:
           share: 0.8
           paramGroup:
             # parameter group
             *default_bank
+          resourceGroup:
+            *default_bank_resource
           isGlobal: true
 
     *HOUSEHOLD_TYPE :
       total_amount: 250
+      rank_weight:
       local_distribute:
         local_household:
           share: 1
           paramGroup:
             *default_household
+          resourceGroup:
+            *default_household_resource
           isGlobal: False
 
 
@@ -236,27 +299,34 @@ ini_agents_unique:
     specific_rank:
     paramGroup:
       [*default_cen_bank]
+    resourceGroup:
+      *default_cen_bank_resource
 
   *CEN_PLANNER_TYPE :
     isGlobal: true
     specific_rank:
     paramGroup:
       [*default_cen_planner]
+    resourceGroup:
+      *default_cen_planner_resource
 
   *CREDIT_MARKET_TYPE :
     isGlobal: true
     specific_rank:
     paramGroup:
       [*default_credit_market]
+    resourceGroup:
 
   *CONSUMPTION_MARKET_TYPE :
     isGlobal: false
     specific_rank:
     paramGroup:
       [*default_consumption_market]
+    resourceGroup:
 
   *LABOR_MARKET_TYPE :
     isGlobal: false
     specific_rank:
     paramGroup:
       [*default_labor_market]
+    resourceGroup:
