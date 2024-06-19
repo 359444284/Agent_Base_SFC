@@ -2,7 +2,7 @@ from agents.BasicAgent import BasicAgent
 from agents.stockItems import Deposit, Reserve
 import numpy as np
 from typing import Tuple, List, Dict
-
+import random
 def any(iterable):
     for element in iterable:
         if element != 0:
@@ -14,11 +14,13 @@ class Firm(BasicAgent):
 
     def __init__(self, uid: Tuple, params:dict, isGlobal: bool, paramGroup: int,
                  labor: int, capital:float, minOrderDuration: int, maxOrderDuration: int, recipe: float, laborProductivity: float, maxOrderProduction: float, \
-                 assetsUsefulLife: float, plannedMarkup: float, orderObservationFrequency: int, productionType: int, \
-                 sectorialClass: int):
+                 assetsUsefulLife: float, plannedMarkup: float, orderObservationFrequency: int, productionType: int):
         super().__init__(uid=uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
+        self.params = params
+
         self.labor = labor
+        self.iniCapital = capital
         self.capital = capital
         self.minOrderDuration = minOrderDuration
         self.maxOrderDuration = maxOrderDuration
@@ -27,26 +29,13 @@ class Firm(BasicAgent):
         self.maxOrderProduction = maxOrderProduction
         self.assetsUsefulLife = assetsUsefulLife
         self.plannedMarkup = plannedMarkup
-        self.orderObservationFrequencyMin = orderObservationFrequency
-        self.orderObservationFrequencyMax = orderObservationFrequency
+        self.orderObservationFrequency = orderObservationFrequency
         self.productionType = productionType
-        self.sectorialClass = sectorialClass
+        self.sectorialClass = paramGroup
 
         # global stock attributes
-        self.globalStocks = np.zeros(self.STOCK_AMOUNT)
-
-        # global flow attributes
-        self.globalFlows = np.zeros(self.FLOW_AMOUNT)
-
+        self.globalStocks = np.zeros(2)
         # local stock attributes
-
-
-        # local flow attributes -- should be reset to 0 after the balance sheet
-        self.localFlows = np.zeros(self.FLOW_AMOUNT)
-
-        self.iniCapital = None
-        self.labor = None
-        self.capital = None
 
         self.capitalQ = 0
         self.unavailableLabor = 0
@@ -96,10 +85,10 @@ class Firm(BasicAgent):
     # activated by the Model
     def estimatingInitialPricePerProdUnit(self):
 
-        total = (1 / self.laborProductivity) * params['wage']
-        total += (1 / self.laborProductivity) * self.recipe * params['costOfCapital'] / params['timeFraction']
-        total += (1 / self.laborProductivity) * self.recipe / (self.assetsUsefulLife * params['timeFraction'])
-        if params['usingMarkup']: total *= (1 + self.plannedMarkup)
+        total = (1 / self.laborProductivity) * self.params['wage']
+        total += (1 / self.laborProductivity) * self.recipe * self.params['costOfCapital'] / self.params['timeFraction']
+        total += (1 / self.laborProductivity) * self.recipe / (self.assetsUsefulLife * self.params['timeFraction'])
+        if self.params['usingMarkup']: total *= (1 + self.plannedMarkup)
         total *= ((self.maxOrderDuration + self.minOrderDuration) / 2)
         return total
 
@@ -167,7 +156,7 @@ class Firm(BasicAgent):
                                                    self.assetsUsefulLife)
             self.appRepository.append(aProductiveProcess)
 
-    def produce(self, current_time) -> tuple:
+    def produce(self, current_time, rng) -> tuple:
 
         # total values of the firm in the current interval unit
         self.currentTotalCostOfProductionOrder = 0
@@ -197,22 +186,22 @@ class Firm(BasicAgent):
             if aProductiveProcess.hasResources:  # resources may be just assigned above
                 # production
                 (aPPoutputOfThePeriod, aPPrequiredLabor, aPPrequiredCapitalQ, aPPlostProduction, \
-                 aPPcostOfLostProduction) = aProductiveProcess.step()
+                 aPPcostOfLostProduction) = aProductiveProcess.step(rng, self.params)
 
                 self.currentTotalOutput += aPPoutputOfThePeriod
 
-                cost = aPPrequiredLabor * params['wage'] \
+                cost = aPPrequiredLabor * self.params['wage'] \
                        + aPPrequiredCapitalQ * self.priceOfDurableProductiveGoodsPerUnit \
-                       * params['costOfCapital'] / params['timeFraction'] \
+                       * self.params['costOfCapital'] / self.params['timeFraction'] \
                        + aPPrequiredCapitalQ * self.priceOfDurableProductiveGoodsPerUnit / \
-                       (self.assetsUsefulLife * params['timeFraction'])
+                       (self.assetsUsefulLife * self.params['timeFraction'])
 
                 self.currentTotalCostOfProductionOrder += cost
 
                 self.currentTotalLostProduction += aPPlostProduction
                 self.currentTotalCostOfLostProduction += aPPcostOfLostProduction
 
-                if not params['usingMarkup']: self.plannedMarkup = 0
+                if not self.params['usingMarkup']: self.plannedMarkup = 0
                 if aProductiveProcess.failure:
                     # consider markup
                     self.inProgressInventories -= cost * (aProductiveProcess.productionClock - 1) * (
@@ -231,13 +220,13 @@ class Firm(BasicAgent):
                                     1 + self.plannedMarkup)
                         # consider markup (it is added in the final and subtracted by the inProgress)
 
-        self.currentTotalCostOfUnusedFactors = (self.labor - self.unavailableLabor) * params['wage'] + \
+        self.currentTotalCostOfUnusedFactors = (self.labor - self.unavailableLabor) * self.params['wage'] + \
                                                (self.capitalQ - self.unavailableCapitalQ) * \
                                                self.priceOfDurableProductiveGoodsPerUnit * \
-                                               params['costOfCapital'] / params['timeFraction'] + \
+                                               self.params['costOfCapital'] / self.params['timeFraction'] + \
                                                (self.capitalQ - self.unavailableCapitalQ) * \
                                                self.priceOfDurableProductiveGoodsPerUnit / \
-                                               (self.assetsUsefulLife * params['timeFraction'])
+                                               (self.assetsUsefulLife * self.params['timeFraction'])
         # considering substitutions also for the idle capital
 
         # print("ORDER MOV AV",self.uid, sum(self.movAvQuantitiesInEachPeriod)/ len(self.movAvQuantitiesInEachPeriod), flush=True)
@@ -246,15 +235,15 @@ class Firm(BasicAgent):
             * (sum(self.movAvDurations) / len(self.movAvDurations)))
 
         # total cost of labor
-        self.totalCostOfLabor = self.labor * params['wage']
+        self.totalCostOfLabor = self.labor * self.params['wage']
 
         # labor adjustments (frequency at orderObservationFrequency)
         if current_time % self.orderObservationFrequency == 0 and current_time > 0:
-            if self.labor > (1 + params['tollerance']) * avgRequiredLabor:
-                self.labor = np.ceil((1 + params['tollerance']) * avgRequiredLabor)  # max accepted q. of L (firing)
-            if self.labor < (1 / (1 + params['tollerance'])) * avgRequiredLabor:
+            if self.labor > (1 + self.params['tollerance']) * avgRequiredLabor:
+                self.labor = np.ceil((1 + self.params['tollerance']) * avgRequiredLabor)  # max accepted q. of L (firing)
+            if self.labor < (1 / (1 + self.params['tollerance'])) * avgRequiredLabor:
                 self.labor = np.ceil(
-                    (1 / (1 + params['tollerance'])) * avgRequiredLabor)  # min accepted q. of L (hiring)
+                    (1 / (1 + self.params['tollerance'])) * avgRequiredLabor)  # min accepted q. of L (hiring)
             # if self.uid==(32,0,0): print("***",self.uid, "labM",avgRequiredLabor,"L", self.labor, flush=True)
 
         # capital adjustments (frequency at each cycle)
@@ -269,14 +258,14 @@ class Firm(BasicAgent):
 
         if current_time > self.orderObservationFrequency:  # no corrections before the end of the first correction interval
             # where orders are under the standard flow of the firm
-            capitalQmin = self.capitalQ / (1 + params['tollerance'])
-            capitalQmax = self.capitalQ * (1 + params['tollerance'])
+            capitalQmin = self.capitalQ / (1 + self.params['tollerance'])
+            capitalQmax = self.capitalQ * (1 + self.params['tollerance'])
 
             avgRequiredCapital = avgRequiredLabor * self.recipe
             avgRequiredCapitalQ = avgRequiredCapital / self.currentPriceOfDurableProductiveGoodsPerUnit
 
-            requiredCapitalSubstitution = self.capital / (self.assetsUsefulLife * params['timeFraction'])
-            requiredCapitalSubstitutionQ = self.capitalQ / (self.assetsUsefulLife * params['timeFraction'])
+            requiredCapitalSubstitution = self.capital / (self.assetsUsefulLife * self.params['timeFraction'])
+            requiredCapitalSubstitutionQ = self.capitalQ / (self.assetsUsefulLife * self.params['timeFraction'])
 
             # obsolescence  and deterioration effect
             self.capitalQ -= requiredCapitalSubstitutionQ
@@ -363,7 +352,7 @@ class Firm(BasicAgent):
         self.grossInvestmentQ = capitalQsubstitutions + capitalQincrement
 
         # total cost of capital
-        self.totalCostOfCapital = self.capitalBeforeAdjustment * params['costOfCapital'] / params['timeFraction'] \
+        self.totalCostOfCapital = self.capitalBeforeAdjustment * self.params['costOfCapital'] / self.params['timeFraction'] \
                                   + capitalQsubstitutions * self.currentPriceOfDurableProductiveGoodsPerUnit
 
         # remove concluded aPPs from the list (backward to avoid skipping when deleting)
@@ -487,17 +476,17 @@ class Firm(BasicAgent):
         self.myBalancesheet[current_time, 1] = self.initialInventories
         self.myBalancesheet[current_time, 2] = self.totalCosts
 
-        if not self.productionType in params["investmentGoods"]:
+        if not self.productionType in self.params["investmentGoods"]:
             self.myBalancesheet[current_time, 3] = self.revenues
         else:
             self.myBalancesheet[current_time, 4] = self.revenues
 
-        if not self.productionType in params["investmentGoods"]:
+        if not self.productionType in self.params["investmentGoods"]:
             self.myBalancesheet[current_time, 5] = self.inventories
         else:
             self.myBalancesheet[current_time, 6] = self.inventories
 
-        if not self.productionType in params["investmentGoods"]:
+        if not self.productionType in self.params["investmentGoods"]:
             self.myBalancesheet[current_time, 7] = self.inProgressInventories
         else:
             self.myBalancesheet[current_time, 8] = self.inProgressInventories
@@ -578,7 +567,7 @@ class ProductiveProcess():
         self.assetsUsefulLife = assetsUsefulLife
 
     # def step(self, productionOrder)->tuple:
-    def step(self) -> tuple:
+    def step(self, rng, params) -> tuple:
         lostProduction = 0
         costOfLostProduction = 0
         self.productionClock += 1
