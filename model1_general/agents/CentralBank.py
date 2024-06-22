@@ -1,21 +1,16 @@
-from agents.BasicAgent import BasicAgent
-from agents.stockItems import Deposit, Reserve
+from model1_general.agents.BasicAgent import BasicAgent
+from model1_general.agents.stockItems.Deposit import Deposit
+from model1_general.agents.stockItems.Reserve import Reserve
 
 import numpy as np
 from typing import Tuple, List, Dict
 
 class CentralBank(BasicAgent):
-        # stock
-    STOCK_AMOUNT = 2
-    DEPOSIT_CB = 0
-    RESERVE = 1
-    ADVANCE = 2
 
-    # flow
-    FLOW_AMOUNT = 2
-    DEPOSIT_DELTA = 0
-    RESERVE_DELTA = 1
-    
+    STOCK_TYPES = ['DEPOSIT_CB', 'RESERVE', 'ADVANCE']
+
+    FLOW_TYPES = []
+
     def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int,
     advanceInterestRate:float):
         super().__init__(uid, isGlobal=isGlobal, paramGroup=paramGroup)
@@ -23,11 +18,6 @@ class CentralBank(BasicAgent):
         self.params = params
 
         self.advanceInterestRate = advanceInterestRate
-
-        self.globalStocks = np.zeros(self.STOCK_AMOUNT)
-
-        # global flow attributes
-        self.globalFlows = np.zeros(self.FLOW_AMOUNT)
 
         # local stock attributes
         self.localStocks = []
@@ -39,11 +29,7 @@ class CentralBank(BasicAgent):
         self.localStocks.append(self.DepositCBs)
         self.localStocks.append(self.Reserves)
         self.localStocks.append(self.Advances)
-        # self.Loans = []
-        # self.Advances = []
 
-        # local flow attributes -- should be reset to 0 after the balance sheet
-        self.localFlows = np.zeros(self.FLOW_AMOUNT)
 
 
     # def save(self):

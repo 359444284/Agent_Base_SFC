@@ -1,5 +1,6 @@
-from agents.BasicAgent import BasicAgent
-from agents.stockItems import Deposit, Reserve
+from model1_general.agents.BasicAgent import BasicAgent
+from model1_general.agents.stockItems.Deposit import Deposit
+from model1_general.agents.stockItems.Reserve import Reserve
 import numpy as np
 from typing import Tuple, List, Dict
 import random

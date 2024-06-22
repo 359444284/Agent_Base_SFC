@@ -172,7 +172,7 @@ agent_distribute_mode: mean
 
 ini_agents_uniform:
   *FIRM_TYPE:
-    total_amount: 100
+    total_amount: 1000
     rank_weight:
     local_distribute:
       com_firm1:
@@ -233,7 +233,7 @@ ini_agents_uniform:
         isGlobal: false
 
   *COMM_BANK_TYPE:
-    total_amount: 100
+    total_amount: 1000
     rank_weight:
     local_distribute:
       local_banks:
