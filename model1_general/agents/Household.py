@@ -10,14 +10,7 @@ from typing import Tuple, List, Dict
 
 class Household(BasicAgent):
     # stock
-    STOCK_AMOUNT = 1
-    DEPOSIT = 0
-
-    # flow
-    FLOW_AMOUNT = 2
-    DEPOSIT_DELTA = 0
-    RESERVE_DELTA = 1
-
+    STOCK_TYPES = ['DEPOSIT']
     def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int,):
         super().__init__(uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
@@ -26,23 +19,6 @@ class Household(BasicAgent):
         # self.isEmployed = False
         # self.wage = 0
         # self.interestsReceived = 0
-
-        self.globalStocks = np.zeros(self.STOCK_AMOUNT)
-
-        # global flow attributes
-        self.globalFlows = np.zeros(self.FLOW_AMOUNT)
-
-        # local stock attributes
-        self.localStocks = []
-
-        self.Deposits = []
-        # self.ConsumptionGoods = []
-
-        self.localStocks.append(self.Deposits)
-        # self.localStocks.append(self.ConsumptionGoods)
-
-        # local flow attributes -- should be reset to 0 after the balance sheet
-        self.localFlows = np.zeros(self.FLOW_AMOUNT)
 
         self.employer = None
 

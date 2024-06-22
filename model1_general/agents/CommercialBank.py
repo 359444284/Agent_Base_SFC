@@ -83,9 +83,9 @@ class CommercialBank(BasicAgent):
         return self.advancesDemand
 
     def payInterests(self, currentTime):
-        reserve = self.Reserves[0]
+        reserve = self.localStocksNamed.RESERVE[0]
        
-        for advance in self.Advances:
+        for advance in self.localStocksNamed.ADVANCE:
             timeDiff = currentTime - advance.startTick
             if timeDiff % advance.ObservePeriod == 0 and timeDiff > 0:
                 

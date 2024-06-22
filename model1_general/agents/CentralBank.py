@@ -19,16 +19,6 @@ class CentralBank(BasicAgent):
 
         self.advanceInterestRate = advanceInterestRate
 
-        # local stock attributes
-        self.localStocks = []
-
-        self.DepositCBs = []
-        self.Reserves = []
-        self.Advances = []
-
-        self.localStocks.append(self.DepositCBs)
-        self.localStocks.append(self.Reserves)
-        self.localStocks.append(self.Advances)
 
 
 

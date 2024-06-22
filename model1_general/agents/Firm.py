@@ -12,6 +12,7 @@ def any(iterable):
 
 
 class Firm(BasicAgent):
+    STOCK_TYPES = ['DEPOSIT', 'LOAN']
 
     def __init__(self, uid: Tuple, params:dict, isGlobal: bool, paramGroup: int,
                  labor: int, capital:float, minOrderDuration: int, maxOrderDuration: int, recipe: float, laborProductivity: float, maxOrderProduction: float, \
@@ -63,14 +64,6 @@ class Firm(BasicAgent):
 
         self.theCentralPlanner = 0
 
-        self.localStocks = []
-
-        self.Deposits = []
-        self.Loans = []
-        self.ConsumptionGoods = []
-
-        self.localStocks.append(self.Deposits)
-        self.localStocks.append(self.Loans)
 
 
 
@@ -382,11 +375,11 @@ class Firm(BasicAgent):
 
     def computeDebtPayments(self, currentTime):
 
-        payments = np.zeros((len(self.Loans), 3))
+        payments = np.zeros((len(self.localStocksNamed.LOAN), 3))
         toPay = 0
         totInterests = 0
 
-        for i, loan in enumerate(self.Loans):
+        for i, loan in enumerate(self.localStocksNamed.LOAN):
             timeDiff = currentTime - loan.startTick
             if timeDiff % loan.ObservePeriod == 0 and timeDiff > 0:
                 iRate = loan.interestRate
@@ -414,24 +407,24 @@ class Firm(BasicAgent):
     def payInterests(self, currentTime):
         self.computeDebtPayments(currentTime)
 
-        deposit = self.Deposits[0]
+        deposit = self.localStocksNamed.DEPOSIT[0]
 
         if deposit.value > self.debtBurden:
-            for i, loan in enumerate(self.Loans):
+            for i, loan in enumerate(self.localStocksNamed.LOAN):
                 valueToPay = self.debtPayments[i, 0] + self.debtPayments[i, 1]
                 if valueToPay > 0:
                     deposit.value -= valueToPay
                     loan.age -= 1
                     if deposit.liabilityHolder != loan.assetHolder:
-                        loan.assetHolder.Reserves[0].value += valueToPay
-                        deposit.liabilityHolder.Reserves[0].value -= valueToPay
+                        loan.assetHolder.localStocksNamed.RESERVE[0].value += valueToPay
+                        deposit.liabilityHolder.localStocksNamed.RESERVE[0].value -= valueToPay
                     loan.value -= self.debtPayments[i, 1]
         else:
             print(f'Firm:{self.uid}  Default due to debt service')
 
     def payWage(self):
         if len(self.employees) > 0:
-            frimDeposit = self.Deposits[0]
+            frimDeposit = self.localStocksNamed.DEPOSIT[0]
             depositLiabilityHolder = frimDeposit.liabilityHolder
             totalWage = 0
             for employee in self.employees:
@@ -515,11 +508,11 @@ class Firm(BasicAgent):
         # for loan in to_remove:
         #     loan.assetHolder.Loans.remove(loan)
         #     self.Loans.remove(loan)
-        for i in range(len(self.Loans) - 1, -1, -1):
-            if self.Loans[i].value == 0 or self.Loans[i].age <= 0:
-                loan = self.Loans[i]
-                loan.assetHolder.Loans.remove(loan)
-                self.Loans.pop(i)
+        for i in range(len(self.localStocksNamed.LOAN) - 1, -1, -1):
+            if self.localStocksNamed.LOAN[i].value == 0 or self.localStocksNamed.LOAN[i].age <= 0:
+                loan = self.localStocksNamed.LOAN[i]
+                loan.assetHolder.localStocksNamed.LOAN.remove(loan)
+                self.localStocksNamed.LOAN.pop(i)
 
     def save(self) -> Tuple:  # mandatory, used by request_agents and by synchroniza
         """

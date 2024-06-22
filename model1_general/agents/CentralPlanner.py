@@ -5,6 +5,7 @@ import numpy as np
 from typing import Tuple, List, Dict
 
 class CentralPlanner(BasicAgent):
+    STOCK_TYPES = ['DEPOSIT']
 
     def __init__(self, uid:Tuple, params:dict, isGlobal:bool, paramGroup:int,
                  incrementAndSubstitutions:str, noOrderGeneration:bool, askingInvGoodsProduction:str,
@@ -29,11 +30,6 @@ class CentralPlanner(BasicAgent):
 
 
         self.proportionalValue = 0
-
-        self.Deposits = []
-        self.localStocks = []
-        self.localStocks.append(self.Deposits)
-        self.globalStocks = np.zeros(1)
 
         self.globalFlows = np.zeros(8)
         self.localFlows = np.zeros(8)
