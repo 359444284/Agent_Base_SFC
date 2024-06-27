@@ -36,8 +36,7 @@ class Firm(BasicAgent):
         self.productionType = productionType
         self.sectorialClass = paramGroup
 
-        # global stock attributes
-        self.globalStocks = np.zeros(2)
+
         # local stock attributes
 
         self.capitalQ = 0

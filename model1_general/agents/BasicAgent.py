@@ -120,6 +120,12 @@ class BasicAgent(core.Agent, abc.ABC):
             self.globalStocks += theReporterGhost.stockInfo
 
 
+    def resetFlows(self):
+        self.globalFlows.fill(0)
+        self.localFlows.fill(0)
+
+
+
 
     def save(self):
         return (self.uid, 

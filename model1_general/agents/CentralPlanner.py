@@ -153,10 +153,6 @@ class CentralPlanner(BasicAgent):
             aFirm.tmpcentralPlannerBuyingPriceCoefficient = centralPlannerBuyingPriceCoefficient
 
     def askFirmsInvGoodsDemand(self, model):
-        self.localFlows[4] = 0
-        self.localFlows[5] = 0
-        self.localFlows[6] = 0
-        self.localFlows[7] = 0
 
         for aFirm in model.context.agents(agent_type=self.params['FIRM_TYPE']):
             (desiredCapitalQsubstitutions, requiredCapitalQincrement, \
@@ -264,9 +260,6 @@ class CentralPlanner(BasicAgent):
             aFirm.investmentGoodsGivenByThePlanner = (capitalQsubstitutions, capitalQincrement, \
                                                       capitalSubstitutions, capitalIncrement)
 
-    def resetAttribute(self):
-
-        self.globalFlows.fill(0)
 
     def save(self):
         basic_info = super().save()

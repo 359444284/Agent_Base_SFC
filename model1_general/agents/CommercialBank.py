@@ -123,10 +123,6 @@ class CommercialBank(BasicAgent):
         # print(self.globalStocks)
 
 
-        self.globalFlows.fill(0)
-        self.localFlows.fill(0)
-
-
         self.cleanAdvance()
 
     def cleanAdvance(self):

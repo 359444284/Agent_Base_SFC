@@ -109,7 +109,7 @@ agent_params:
     param_name: []
     &default_cen_planner 0:
       #incrementAndSubstitutions = 'zero', 'random', 'total', 'proportionally' # to be accorded with the name of the folder in the experiments
-      incrementAndSubstitutions: 'total'
+      incrementAndSubstitutions: 'proportionally'
       #askingMaxInvGoodsProduction = 'min', 'regular', 'max' # to be accorded with the name of the folder in the experiments -> PropMin, PropMax
       # relevant only under the case of incrementAndSubstitutions = 'proportionally'
       askingInvGoodsProduction: 'max' # OR 'regular' (basic option) OR 'min' OR 'max'
