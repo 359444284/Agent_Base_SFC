@@ -1,6 +1,7 @@
 #incrementAndSubstitutions = 'zero', 'random', 'total', 'proportionally' # to be accorded with the name of the folder in the experiments
-incrementAndSubstitutions = 'total'
-
+incrementAndSubstitutions = 'proportionally'
+# 0.0005605411601261451 proportionally
+# 0.9467354673552263 total
 #askingMaxInvGoodsProduction = 'min', 'regular', 'max' # to be accorded with the name of the folder in the experiments -> PropMin, PropMax
 # relevant only under the case of incrementAndSubstitutions = 'proportionally' 
 askingInvGoodsProduction = 'max' # OR 'regular' (basic option) OR 'min' OR 'max'

@@ -7,11 +7,11 @@ from repast4py import core
 
 class CreditMarket(BasicMarket):
 
-    def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int,
+    def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
                  nround:int):
         super().__init__(uid, isGlobal, paramGroup, nround)
 
-        self.params = params
+        self.params = model.params
 
         self.nround = nround
 

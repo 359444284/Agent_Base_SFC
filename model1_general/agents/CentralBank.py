@@ -11,11 +11,11 @@ class CentralBank(BasicAgent):
 
     FLOW_TYPES = []
 
-    def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int,
+    def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
     advanceInterestRate:float):
         super().__init__(uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
-        self.params = params
+        self.params = model.params
 
         self.advanceInterestRate = advanceInterestRate
 

@@ -10,24 +10,25 @@ from typing import Tuple, List, Dict
 
 class Household(BasicAgent):
     # stock
-    STOCK_TYPES = ['DEPOSIT']
-    def __init__(self, uid: Tuple, params: Dict, isGlobal: bool, paramGroup: int,):
+    STOCK_TYPES = ['DEPOSIT', 'CONS_GOOD']
+
+    EXP_TYPES = ['CONS_PRICE']
+    def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,):
         super().__init__(uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
-        self.params = params
+        self.params = model.params
 
-        # self.isEmployed = False
-        # self.wage = 0
-        # self.interestsReceived = 0
+        self.wage = 0
+        self.interestsReceived = 0
 
         self.employer = None
 
 
     def getNetWealth(self):
-        return self.globalStocks[self.ConsumptionGoods] + self.globalStocks[self.DEPOSIT]
+        return self.globalStocksNamed.CONS_GOOD + self.globalStocksNamed.DEPOSIT
 
     def getGrossIncome(self):
-        grossIncome = self.wage if self.isEmployed else 0
+        grossIncome = self.wage if self.employer else 0
         grossIncome += self.interestsReceived
         # grossIncome += dividendsReceived
         return grossIncome
@@ -44,6 +45,8 @@ class Household(BasicAgent):
 
 
     def computeConsumptionDemand(self):
+        self.mergeInformationTableData()
+
         propensityOOI = 0.385
         propensityOOW = 0.25
         priceCoefficient = 0.8 + random.random()*0.4
@@ -56,6 +59,9 @@ class Household(BasicAgent):
     def getWage(self):
         basicWage = 1
         return max(0, basicWage)
+
+    def updateExpectations(self):
+        pass
 
     # def save(self):
     #     basic_info = super().save()

@@ -41,6 +41,7 @@ agent_params:
       laborProductivity: 0.7
       maxOrderProduction: 50
       plannedMarkup: 0.30
+      productionType: 0
     &CapFirm_2 3:
       <<: *ConFirm_2_template
       minOrderDuration: 2
@@ -57,6 +58,7 @@ agent_params:
       maxOrderProduction: 250
       plannedMarkup: 0.20
       orderObservationFrequency: [10, 15, int]
+      productionType: 0
     &CapFirm_3 5:
       <<: *ConFirm_3_template
       minOrderDuration: 4
@@ -73,6 +75,7 @@ agent_params:
       maxOrderProduction: 500
       plannedMarkup: 0.30
       orderObservationFrequency: [15, 20, int]
+      productionType: 0
     &CapFirm_4 7:
       <<: *ConFirm_4_template
       minOrderDuration: 12

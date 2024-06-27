@@ -12,11 +12,12 @@ class CommercialBank(BasicAgent):
 
 
     
-    def __init__(self, uid: Tuple, params:dict, isGlobal: bool, paramGroup: int,
+    def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
         depositInterestRate: float, loanInterestRate: float, targetedLiquidityRatio: float, capitalAdequacyRatio:float):
         super().__init__(uid=uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
         # params (need to modify save and update function)
+        self.params = model.params
 
         self.depositInterestRate = depositInterestRate
         self.loanInterestRate = loanInterestRate
@@ -27,7 +28,7 @@ class CommercialBank(BasicAgent):
         self.loanSupply = 0
 
         # -------------------------
-        self.myBalancesheet = np.zeros((params['howManyCycles'], 7))
+        self.myBalancesheet = np.zeros((self.params['howManyCycles'], 7))
 
     def transfer(self, sourceDeposit: Deposit, targetDeposit: Deposit, value: float):
 
@@ -43,6 +44,7 @@ class CommercialBank(BasicAgent):
         if sourceBank != targetBank:
             sourceBankReserve.value -= value
             targetBankReserve.value += value
+
 
     def payDepositInterests(self):
         for deposit in self.localStocksNamed.DEPOSIT:
@@ -102,6 +104,8 @@ class CommercialBank(BasicAgent):
 
     def makeBalancesheet(self, currentTime):
 
+
+
         netWealth = self.getNetWealth()
         self.myBalancesheet[currentTime, 0] = self.globalStocksNamed.DEPOSIT
         self.myBalancesheet[currentTime, 1] = self.globalStocksNamed.RESERVE
@@ -113,6 +117,11 @@ class CommercialBank(BasicAgent):
 
 
         self.myBalancesheet[currentTime, 6] = netWealth
+
+        # print(self.myBalancesheet[currentTime, :])
+
+        # print(self.globalStocks)
+
 
         self.globalFlows.fill(0)
         self.localFlows.fill(0)

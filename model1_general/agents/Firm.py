@@ -1,6 +1,7 @@
 from model1_general.agents.BasicAgent import BasicAgent
 from model1_general.agents.stockItems.Deposit import Deposit
 from model1_general.agents.stockItems.Reserve import Reserve
+from model1_general.agents.stockItems.ConsumptionGood import ConsumptionGood
 import numpy as np
 from typing import Tuple, List, Dict
 import random
@@ -12,14 +13,14 @@ def any(iterable):
 
 
 class Firm(BasicAgent):
-    STOCK_TYPES = ['DEPOSIT', 'LOAN']
+    STOCK_TYPES = ['DEPOSIT', 'LOAN', 'CONS_GOOD']
 
-    def __init__(self, uid: Tuple, params:dict, isGlobal: bool, paramGroup: int,
+    def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
                  labor: int, capital:float, minOrderDuration: int, maxOrderDuration: int, recipe: float, laborProductivity: float, maxOrderProduction: float, \
                  assetsUsefulLife: float, plannedMarkup: float, orderObservationFrequency: int, productionType: int):
         super().__init__(uid=uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
-        self.params = params
+        self.params = model.params
 
         self.labor = labor
         self.iniCapital = capital
@@ -55,7 +56,7 @@ class Firm(BasicAgent):
         self.addedValue = 0
         self.initialInventories = 0
         self.grossInvestmentQ = 0
-        self.myBalancesheet = np.zeros((params['howManyCycles'], 20))
+        self.myBalancesheet = np.zeros((self.params['howManyCycles'], 20))
 
         self.movAvQuantitiesInEachPeriod = []
         self.movAvDurations = []
@@ -210,6 +211,9 @@ class Firm(BasicAgent):
                         self.inProgressInventories += cost * (1 + self.plannedMarkup)  # consider markup
                     else:
                         self.inventories += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
+                        cons_goods = self.localStocksNamed.CONS_GOOD[0]
+                        cons_goods.quantity += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
+
                         self.inProgressInventories -= cost * (aProductiveProcess.orderDuration - 1) * (
                                     1 + self.plannedMarkup)
                         # consider markup (it is added in the final and subtracted by the inProgress)

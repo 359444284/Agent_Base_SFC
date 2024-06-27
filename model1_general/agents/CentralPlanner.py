@@ -7,13 +7,13 @@ from typing import Tuple, List, Dict
 class CentralPlanner(BasicAgent):
     STOCK_TYPES = ['DEPOSIT']
 
-    def __init__(self, uid:Tuple, params:dict, isGlobal:bool, paramGroup:int,
+    def __init__(self, uid:Tuple, model, isGlobal:bool, paramGroup:int,
                  incrementAndSubstitutions:str, noOrderGeneration:bool, askingInvGoodsProduction:str,
                  investmentVariation:float, randomOrderGeneration:bool, durationCoeff: float):
         super().__init__(uid=uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
         # params
-        self.params = params
+        self.params = model.params
         self.incrementAndSubstitutions = incrementAndSubstitutions
         self.noOrderGeneration = noOrderGeneration
         self.askingInvGoodsProduction = askingInvGoodsProduction
@@ -22,7 +22,7 @@ class CentralPlanner(BasicAgent):
         self.durationCoeff = durationCoeff
 
 
-        self.informationTable = np.zeros((params['howManyCycles'], 5))  # col 5 not used multiranks,
+        self.informationTable = np.zeros((self.params['howManyCycles'], 5))  # col 5 not used multiranks,
         # it only reports gross exp inv in output ##ptpt
 
         # workingMultirank use it only if rank > 0
@@ -97,15 +97,30 @@ class CentralPlanner(BasicAgent):
 
                     if aFirm.productionType in self.params['investmentGoods']:
                         # max or min (depending on how the coefficients are built)
+
                         aFirm.receivingNewOrder(model.rng.random() * aFirm.maxOrderProduction * \
                                                 (1 + self.investmentVariation), \
                                                 model.rng.integers(aFirm.minOrderDuration, aFirm.maxOrderDuration + 1) \
                                                 * self.durationCoeff)
+                        # maxOrderProductionMod = aFirm.maxOrderProduction * (1 + self.investmentVariation)
+                        # aFirm.receivingNewOrder( \
+                        #     maxOrderProductionMod * self.params["minOrderAsAShareOfMaxOrderProduction"] + \
+                        #     model.rng.random() * maxOrderProductionMod * (1 - self.params["minOrderAsAShareOfMaxOrderProduction"]), \
+                        #     model.rng.integers(aFirm.minOrderDuration,
+                        #                  aFirm.maxOrderDuration + 1) * self.durationCoeff)
 
                     else:
                         aFirm.receivingNewOrder(model.rng.random() * aFirm.maxOrderProduction * (1 + consumptionVariation), \
                                                 model.rng.integers(aFirm.minOrderDuration, aFirm.maxOrderDuration + 1) \
                                                 * self.durationCoeff)
+
+                        # maxOrderProductionMod = aFirm.maxOrderProduction * (1 + self.investmentVariation)
+                        # aFirm.receivingNewOrder( \
+                        #     maxOrderProductionMod * self.params["minOrderAsAShareOfMaxOrderProduction"] + \
+                        #     model.rng.random() * maxOrderProductionMod * (1 - self.params["minOrderAsAShareOfMaxOrderProduction"]), \
+                        #     model.rng.integers(aFirm.minOrderDuration,
+                        #                  aFirm.maxOrderDuration + 1) * self.durationCoeff)
+
                 else:
                     aFirm.receivingNewOrder(0, (aFirm.minOrderDuration + aFirm.maxOrderDuration) / 2)
                     print("ERROR! The investment variation coefficient must be consistent\
@@ -138,6 +153,10 @@ class CentralPlanner(BasicAgent):
             aFirm.tmpcentralPlannerBuyingPriceCoefficient = centralPlannerBuyingPriceCoefficient
 
     def askFirmsInvGoodsDemand(self, model):
+        self.localFlows[4] = 0
+        self.localFlows[5] = 0
+        self.localFlows[6] = 0
+        self.localFlows[7] = 0
 
         for aFirm in model.context.agents(agent_type=self.params['FIRM_TYPE']):
             (desiredCapitalQsubstitutions, requiredCapitalQincrement, \
@@ -204,12 +223,11 @@ class CentralPlanner(BasicAgent):
                 capitalIncrement = requiredCapitalIncrement
 
             # FULLY INFORMED CENTRAL PLANNER ... BUT SHY
-
             # We introduce the informed central planner, which distritutes the goods under the label 'proportionally'
 
             if self.incrementAndSubstitutions == 'proportionally':
 
-                if (self.allFirmsDesiredCapitalSubstitutions + self.allFirmsRequiredCapitalIncrement) == 0:
+                if (self.localFlows[6] + self.localFlows[7]) == 0:
                     capitalQsubstitutions = 0
                     capitalQincrement = 0
                     capitalSubstitutions = 0
@@ -219,6 +237,7 @@ class CentralPlanner(BasicAgent):
 
                     # if aFirm.uid==(0,0,0): print(t(), proportionalValue, flush=True)
                     # if >1 firms have more K than what require and too many inventories
+
 
                     totalQIncrementAndSubstitutions = self.proportionalValue * (
                                 desiredCapitalQsubstitutions + requiredCapitalQincrement)
@@ -248,13 +267,12 @@ class CentralPlanner(BasicAgent):
     def resetAttribute(self):
 
         self.globalFlows.fill(0)
-        self.localFlows.fill(0)
 
     def save(self):
         basic_info = super().save()
 
         params = (
-            self.proportionalValue,
+            self.proportionalValue
         )
 
         return (*basic_info, params)
