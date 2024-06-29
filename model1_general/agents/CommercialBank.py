@@ -35,8 +35,8 @@ class CommercialBank(BasicAgent):
         sourceBank = sourceDeposit.liabilityHolder
         targetBank = targetDeposit.liabilityHolder
 
-        sourceBankReserve = sourceBank.localStocksNamed.RESERVE[0]
-        targetBankReserve = targetBank.localStocksNamed.RESERVE[0]
+        sourceBankReserve = sourceBank.localStocks.RESERVE[0]
+        targetBankReserve = targetBank.localStocks.RESERVE[0]
 
         sourceDeposit.value -= value
         targetDeposit.value += value
@@ -47,7 +47,7 @@ class CommercialBank(BasicAgent):
 
 
     def payDepositInterests(self):
-        for deposit in self.localStocksNamed.DEPOSIT:
+        for deposit in self.localStocks.DEPOSIT:
             depositor = deposit.assetHolder
             payInterests = self.depositInterestRate * deposit.value
             self.localFlowsNamed.INTEREST_DEPOSIT += payInterests
@@ -55,7 +55,7 @@ class CommercialBank(BasicAgent):
             deposit.value += payInterests
 
     def getNetWealth(self):
-        return self.globalStocksNamed.LOAN + self.globalStocksNamed.RESERVE - self.globalStocksNamed.ADVANCE - self.globalStocksNamed.DEPOSIT
+        return self.globalStocks.LOAN + self.globalStocks.RESERVE - self.globalStocks.ADVANCE - self.globalStocks.DEPOSIT
 
     def getCreditSupply(self):
         capitalsValue = self.getNetWealth()
@@ -64,7 +64,7 @@ class CommercialBank(BasicAgent):
 
         desiredLoansStock = max(capitalsValue*0.6, 0)
 
-        currentLoans = self.globalStocksNamed.LOAN
+        currentLoans = self.globalStocks.LOAN
 
         newLoansSupply = max(desiredLoansStock - currentLoans, 0)
 
@@ -77,17 +77,17 @@ class CommercialBank(BasicAgent):
 
     def getAdvanceDemand(self):
         
-        totalDeposits = self.globalStocksNamed.DEPOSIT
-        totalReserves = self.globalStocksNamed.RESERVE
+        totalDeposits = self.globalStocks.DEPOSIT
+        totalReserves = self.globalStocks.RESERVE
 
         self.advancesDemand = max(totalDeposits * self.targetedLiquidityRatio - totalReserves, 0)
 
         return self.advancesDemand
 
     def payInterests(self, currentTime):
-        reserve = self.localStocksNamed.RESERVE[0]
+        reserve = self.localStocks.RESERVE[0]
        
-        for advance in self.localStocksNamed.ADVANCE:
+        for advance in self.localStocks.ADVANCE:
             timeDiff = currentTime - advance.startTick
             if timeDiff % advance.ObservePeriod == 0 and timeDiff > 0:
                 
@@ -107,10 +107,10 @@ class CommercialBank(BasicAgent):
 
 
         netWealth = self.getNetWealth()
-        self.myBalancesheet[currentTime, 0] = self.globalStocksNamed.DEPOSIT
-        self.myBalancesheet[currentTime, 1] = self.globalStocksNamed.RESERVE
-        self.myBalancesheet[currentTime, 2] = self.globalStocksNamed.ADVANCE
-        self.myBalancesheet[currentTime, 3] = self.globalStocksNamed.LOAN
+        self.myBalancesheet[currentTime, 0] = self.globalStocks.DEPOSIT
+        self.myBalancesheet[currentTime, 1] = self.globalStocks.RESERVE
+        self.myBalancesheet[currentTime, 2] = self.globalStocks.ADVANCE
+        self.myBalancesheet[currentTime, 3] = self.globalStocks.LOAN
 
         self.myBalancesheet[currentTime, 4] = self.globalFlowsNamed.INTEREST_DEPOSIT
         self.myBalancesheet[currentTime, 5] = self.globalFlowsNamed.INTEREST_LOAN
@@ -120,7 +120,7 @@ class CommercialBank(BasicAgent):
 
         # print(self.myBalancesheet[currentTime, :])
 
-        # print(self.globalStocks)
+        # print(self._globalStocks)
 
 
         self.cleanAdvance()
@@ -135,11 +135,11 @@ class CommercialBank(BasicAgent):
         #     advance.liabilityHolder.Advances.remove(advance)
         #     self.Advances.remove(advance)
 
-        for i in range(len(self.localStocksNamed.ADVANCE) - 1, -1, -1):
-            if self.localStocksNamed.ADVANCE[i].value == 0 or self.localStocksNamed.ADVANCE[i].age <= 0:
-                advance = self.localStocksNamed.ADVANCE[i]
-                advance.assetHolder.localStocksNamed.ADVANCE.remove(advance)
-                self.localStocksNamed.ADVANCE.pop(i)
+        for i in range(len(self.localStocks.ADVANCE) - 1, -1, -1):
+            if self.localStocks.ADVANCE[i].value == 0 or self.localStocks.ADVANCE[i].age <= 0:
+                advance = self.localStocks.ADVANCE[i]
+                advance.assetHolder.localStocks.ADVANCE.remove(advance)
+                self.localStocks.ADVANCE.pop(i)
 
             
 

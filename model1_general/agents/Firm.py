@@ -210,7 +210,7 @@ class Firm(BasicAgent):
                         self.inProgressInventories += cost * (1 + self.plannedMarkup)  # consider markup
                     else:
                         self.inventories += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
-                        cons_goods = self.localStocksNamed.CONS_GOOD[0]
+                        cons_goods = self.localStocks.CONS_GOOD[0]
                         cons_goods.quantity += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
 
                         self.inProgressInventories -= cost * (aProductiveProcess.orderDuration - 1) * (
@@ -378,11 +378,11 @@ class Firm(BasicAgent):
 
     def computeDebtPayments(self, currentTime):
 
-        payments = np.zeros((len(self.localStocksNamed.LOAN), 3))
+        payments = np.zeros((len(self.localStocks.LOAN), 3))
         toPay = 0
         totInterests = 0
 
-        for i, loan in enumerate(self.localStocksNamed.LOAN):
+        for i, loan in enumerate(self.localStocks.LOAN):
             timeDiff = currentTime - loan.startTick
             if timeDiff % loan.ObservePeriod == 0 and timeDiff > 0:
                 iRate = loan.interestRate
@@ -410,24 +410,24 @@ class Firm(BasicAgent):
     def payInterests(self, currentTime):
         self.computeDebtPayments(currentTime)
 
-        deposit = self.localStocksNamed.DEPOSIT[0]
+        deposit = self.localStocks.DEPOSIT[0]
 
         if deposit.value > self.debtBurden:
-            for i, loan in enumerate(self.localStocksNamed.LOAN):
+            for i, loan in enumerate(self.localStocks.LOAN):
                 valueToPay = self.debtPayments[i, 0] + self.debtPayments[i, 1]
                 if valueToPay > 0:
                     deposit.value -= valueToPay
                     loan.age -= 1
                     if deposit.liabilityHolder != loan.assetHolder:
-                        loan.assetHolder.localStocksNamed.RESERVE[0].value += valueToPay
-                        deposit.liabilityHolder.localStocksNamed.RESERVE[0].value -= valueToPay
+                        loan.assetHolder.localStocks.RESERVE[0].value += valueToPay
+                        deposit.liabilityHolder.localStocks.RESERVE[0].value -= valueToPay
                     loan.value -= self.debtPayments[i, 1]
         else:
             print(f'Firm:{self.uid}  Default due to debt service')
 
     def payWage(self):
         if len(self.employees) > 0:
-            frimDeposit = self.localStocksNamed.DEPOSIT[0]
+            frimDeposit = self.localStocks.DEPOSIT[0]
             depositLiabilityHolder = frimDeposit.liabilityHolder
             totalWage = 0
             for employee in self.employees:
@@ -437,7 +437,8 @@ class Firm(BasicAgent):
                 print(f'Firm:{self.uid}  Default wage due to debt service')
             else:
                 for employee in self.employees:
-                    depositLiabilityHolder.transfer(frimDeposit, employee.Deposits[0], employee.getWage())
+                    wage = employee.wage
+                    depositLiabilityHolder.transfer(frimDeposit, employee.Deposits[0], wage)
 
     def computeLaborDemand(self):
         currentWorkers = len(self.employees)
@@ -511,11 +512,11 @@ class Firm(BasicAgent):
         # for loan in to_remove:
         #     loan.assetHolder.Loans.remove(loan)
         #     self.Loans.remove(loan)
-        for i in range(len(self.localStocksNamed.LOAN) - 1, -1, -1):
-            if self.localStocksNamed.LOAN[i].value == 0 or self.localStocksNamed.LOAN[i].age <= 0:
-                loan = self.localStocksNamed.LOAN[i]
-                loan.assetHolder.localStocksNamed.LOAN.remove(loan)
-                self.localStocksNamed.LOAN.pop(i)
+        for i in range(len(self.localStocks.LOAN) - 1, -1, -1):
+            if self.localStocks.LOAN[i].value == 0 or self.localStocks.LOAN[i].age <= 0:
+                loan = self.localStocks.LOAN[i]
+                loan.assetHolder.localStocks.LOAN.remove(loan)
+                self.localStocks.LOAN.pop(i)
 
     def save(self) -> Tuple:  # mandatory, used by request_agents and by synchroniza
         """

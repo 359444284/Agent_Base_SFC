@@ -48,37 +48,40 @@ class BasicAgent(core.Agent, abc.ABC):
         self.isGlobal: bool = isGlobal
         self.paramGroup: int = paramGroup
 
-        self.globalStocksNamed: Optional[NamedAccessor] = None
-        self.globalFlowsNamed: Optional[NamedAccessor] = None
-        self.localFlowsNamed: Optional[NamedAccessor] = None
-        self.localStocksNamed: Optional[NamedAccessor] = None
-        self.expectationsNamed: Optional[NamedAccessor] = None
+        self.globalStocks: Optional[NamedAccessor] = None
+        self.globalFlows: Optional[NamedAccessor] = None
+        self.localFlows: Optional[NamedAccessor] = None
+        self.localStocks: Optional[NamedAccessor] = None
+        self.expectations: Optional[NamedAccessor] = None
 
-        self.globalStocks: Optional[np.ndarray] = None
-        self.globalFlows: Optional[np.ndarray] = None
-        self.localFlows: Optional[np.ndarray] = None
-        self.localStocks: Optional[List[List]] = None
-        self.expectations: Optional[List[deque]] = None
+        self._globalStocks: Optional[np.ndarray] = None
+        self._globalFlows: Optional[np.ndarray] = None
+        self._localFlows: Optional[np.ndarray] = None
+        self._localStocks: Optional[List[List]] = None
+        self._expectations: Optional[List[deque]] = None
 
         self.STOCK_TYPES = getattr(self, 'STOCK_TYPES', [])
         self.FLOW_TYPES = getattr(self, 'FLOW_TYPES', [])
         self.EXP_TYPES = getattr(self, 'EXP_TYPES', [])
+        self.LAG_TYPES = getattr(self, 'LAG_TYPES', [])
 
-        self.globalStocks = np.zeros(len(self.STOCK_TYPES))
-        self.globalStocksNamed = NamedAccessor(self, 'globalStocks', self.STOCK_TYPES)
-        self.localStocks = [[] for _ in range(len(self.STOCK_TYPES))]
-        self.localStocksNamed = NamedAccessor(self, 'localStocks', self.STOCK_TYPES)
-
-
-        self.globalFlows = np.zeros(len(self.FLOW_TYPES))
-        self.globalFlowsNamed = NamedAccessor(self, 'globalFlows', self.FLOW_TYPES)
-        self.localFlows = np.zeros(len(self.FLOW_TYPES))
-        self.localFlowsNamed = NamedAccessor(self, 'localFlows', self.FLOW_TYPES)
+        self._globalStocks = np.zeros(len(self.STOCK_TYPES))
+        self.globalStocks = NamedAccessor(self, '_globalStocks', self.STOCK_TYPES)
+        self._localStocks = [[] for _ in range(len(self.STOCK_TYPES))]
+        self.localStocks = NamedAccessor(self, '_localStocks', self.STOCK_TYPES)
 
 
-        self.expectations = [None for _ in range(len(self.EXP_TYPES))]
-        self.expectationsNamed = NamedAccessor(self, 'expectations', self.EXP_TYPES)
+        self._globalFlows = np.zeros(len(self.FLOW_TYPES))
+        self.globalFlows = NamedAccessor(self, '_globalFlows', self.FLOW_TYPES)
+        self._localFlows = np.zeros(len(self.FLOW_TYPES))
+        self.localFlows = NamedAccessor(self, '_localFlows', self.FLOW_TYPES)
 
+
+        self._expectations = [None for _ in range(len(self.EXP_TYPES))]
+        self.expectations = NamedAccessor(self, '_expectations', self.EXP_TYPES)
+
+        self._lagValues = [None for _ in range(len(self.LAG_TYPES))]
+        self.lagValues = NamedAccessor(self, '_lagValues', self.LAG_TYPES)
 
         self.reporterGhostList = []
         self.counterPart = None
@@ -89,8 +92,8 @@ class BasicAgent(core.Agent, abc.ABC):
     def getInformationTableData(self):
 
         aggregate_data = (
-            self.localFlows.copy(),
-            self.aggrigateStocks(self.localStocks),
+            self._localFlows.copy(),
+            self.aggrigateStocks(self._localStocks),
             )
 
         # -- reset the delta to 0
@@ -109,30 +112,30 @@ class BasicAgent(core.Agent, abc.ABC):
 
     def mergeInformationTableData(self):
 
-        self.globalStocks[:] = self.aggrigateStocks(self.localStocks)
+        self._globalStocks[:] = self.aggrigateStocks(self._localStocks)
 
         # print(self.globalStocks)
-        self.globalFlows.fill(0)
-        self.globalFlows += self.localFlows
+        self._globalFlows.fill(0)
+        self._globalFlows += self._localFlows
 
         for theReporterGhost in self.reporterGhostList:
-            self.globalFlows += theReporterGhost.flowInfo
-            self.globalStocks += theReporterGhost.stockInfo
+            self._globalFlows += theReporterGhost.flowInfo
+            self._globalStocks += theReporterGhost.stockInfo
 
 
     def resetFlows(self):
-        self.globalFlows.fill(0)
-        self.localFlows.fill(0)
+        self._globalFlows.fill(0)
+        self._localFlows.fill(0)
 
-
-
+    def updateExpectation(self):
+        pass
 
     def save(self):
         return (self.uid, 
-               (self.isGlobal, self.paramGroup, self.globalStocks, self.globalFlows)
+               (self.isGlobal, self.paramGroup, self._globalStocks, self._globalFlows)
                )
 
     def update(self, basic_info):
-        self.isGlobal, self.paramGroup, self.globalStocks[:], self.globalFlows[:] = basic_info
+        self.isGlobal, self.paramGroup, self._globalStocks[:], self._globalFlows[:] = basic_info
 
 #

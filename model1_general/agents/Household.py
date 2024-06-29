@@ -12,20 +12,23 @@ class Household(BasicAgent):
     # stock
     STOCK_TYPES = ['DEPOSIT', 'CONS_GOOD']
 
-    EXP_TYPES = ['CONS_PRICE']
+    LAG_TYPES = ['EMPLOYED']
+
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,):
         super().__init__(uid, isGlobal=isGlobal, paramGroup=paramGroup)
 
         self.params = model.params
+        self.context = model.context
 
         self.wage = 0
         self.interestsReceived = 0
+        self.employmentWageLag = 4
 
         self.employer = None
 
 
     def getNetWealth(self):
-        return self.globalStocksNamed.CONS_GOOD + self.globalStocksNamed.DEPOSIT
+        return self.globalStocks.CONS_GOOD + self.globalStocks.DEPOSIT
 
     def getGrossIncome(self):
         grossIncome = self.wage if self.employer else 0
@@ -42,26 +45,47 @@ class Household(BasicAgent):
         else:
             return 0
 
-
-
     def computeConsumptionDemand(self):
         self.mergeInformationTableData()
-
         propensityOOI = 0.385
         propensityOOW = 0.25
-        priceCoefficient = 0.8 + random.random()*0.4
         netIncome = self.getNetIncome()
         netWealth = self.getNetWealth()
 
-        demand = (propensityOOI*(netIncome/priceCoefficient)+propensityOOW*(netWealth/priceCoefficient))
+        demand = (propensityOOI * netIncome + propensityOOW * netWealth)
         return demand
 
-    def getWage(self):
-        basicWage = 1
-        return max(0, basicWage)
+    def computeWage(self):
 
-    def updateExpectations(self):
-        pass
+        employmentRate = self.getMicroReferenceVariableForWage()
+        wage = self.wage
+
+        if employmentRate > 0.49:
+            wage -= 0.5 * wage * random.random()
+        else:
+            macroReferenceVariable = self.getMacroUnemploymentRate()
+            if macroReferenceVariable <= 0.08:
+                wage += 0.5 * wage * random.random()
+
+        self.wage = max(wage, 0)
+        return self.wage
+
+
+    def getMicroUnemploymentRate(self):
+        if self.employer is None:
+            averageUnemployment = 1
+            for i in range(1, self.employmentWageLag):
+                averageUnemployment += self.lagValues.EMPLOYED[i]
+
+            return averageUnemployment / self.employmentWageLag
+        else:
+            return 0
+
+    def getMacroUnemploymentRate(self):
+        if self.employer is None:
+            return 0
+        else:
+            return 0
 
     # def save(self):
     #     basic_info = super().save()
