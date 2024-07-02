@@ -50,7 +50,7 @@ class CommercialBank(BasicAgent):
         for deposit in self.localStocks.DEPOSIT:
             depositor = deposit.assetHolder
             payInterests = self.depositInterestRate * deposit.value
-            self.localFlowsNamed.INTEREST_DEPOSIT += payInterests
+            self.localFlows.INTEREST_DEPOSIT += payInterests
             # depositor.localFlows[depositor.INTEREST_DEPOSIT] += payInterests
             deposit.value += payInterests
 
@@ -112,8 +112,8 @@ class CommercialBank(BasicAgent):
         self.myBalancesheet[currentTime, 2] = self.globalStocks.ADVANCE
         self.myBalancesheet[currentTime, 3] = self.globalStocks.LOAN
 
-        self.myBalancesheet[currentTime, 4] = self.globalFlowsNamed.INTEREST_DEPOSIT
-        self.myBalancesheet[currentTime, 5] = self.globalFlowsNamed.INTEREST_LOAN
+        self.myBalancesheet[currentTime, 4] = self.globalFlows.INTEREST_DEPOSIT
+        self.myBalancesheet[currentTime, 5] = self.globalFlows.INTEREST_LOAN
 
 
         self.myBalancesheet[currentTime, 6] = netWealth

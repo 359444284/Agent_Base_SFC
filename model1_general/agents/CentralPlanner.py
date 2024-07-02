@@ -76,9 +76,9 @@ class CentralPlanner(BasicAgent):
             # comparing firms' productive capacity
             for aFirm in model.context.agents(agent_type=self.params['FIRM_TYPE']):
                 if aFirm.productionType in self.params["investmentGoods"]:
-                    invGoodsCapacity += aFirm.labor * aFirm.laborProductivity
+                    invGoodsCapacity += len(aFirm.employees) * aFirm.laborProductivity
                 else:
-                    consGoodsCapacity += aFirm.labor * aFirm.laborProductivity
+                    consGoodsCapacity += len(aFirm.employees) * aFirm.laborProductivity
             consumptionVariation = (1 - self.investmentVariation) * invGoodsCapacity / consGoodsCapacity
             # consumptionVariation is equivalent to investmentVariation
             # accounting for different volumes of prod capacity

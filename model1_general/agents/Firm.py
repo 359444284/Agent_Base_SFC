@@ -22,7 +22,7 @@ class Firm(BasicAgent):
 
         self.params = model.params
 
-        self.labor = labor
+        self.laborExpect = labor
         self.iniCapital = capital
         self.capital = capital
         self.minOrderDuration = minOrderDuration
@@ -71,10 +71,7 @@ class Firm(BasicAgent):
 
         self.tmpshareOfInventoriesBeingSold = 0
         self.tmpcentralPlannerBuyingPriceCoefficient = 0
-        self.inventory_delta = 0
-        self.new_inventory_delta = 0
-        self.capital_delta = 0
-        self.new_capital_delta = 0
+
 
     # activated by the Model
     def estimatingInitialPricePerProdUnit(self):
@@ -141,7 +138,7 @@ class Firm(BasicAgent):
         #          "req L", requiredLabor, "L", self.labor)
 
         # create a new aPP or skip the order
-        if requiredLabor <= self.labor and requiredCapitalQ <= self.capitalQ:
+        if requiredLabor <= len(self.employees) and requiredCapitalQ <= self.capitalQ:
             self.productiveProcessIdGenerator += 1
             productiveProcessId = (self.uid[0], self.uid[1], self.uid[2], self.productiveProcessIdGenerator)
             aProductiveProcess = ProductiveProcess(productiveProcessId, productionOrderQuantityByPeriod, \
@@ -171,7 +168,7 @@ class Firm(BasicAgent):
         for aProductiveProcess in self.appRepository:
 
             if not aProductiveProcess.hasResources and \
-                    (self.labor - self.unavailableLabor >= aProductiveProcess.requiredLabor and \
+                    (len(self.employees) - self.unavailableLabor >= aProductiveProcess.requiredLabor and \
                      self.capitalQ - self.unavailableCapitalQ >= aProductiveProcess.requiredCapitalQ):
                 self.unavailableLabor += aProductiveProcess.requiredLabor
                 self.unavailableCapitalQ += aProductiveProcess.requiredCapitalQ
@@ -217,7 +214,7 @@ class Firm(BasicAgent):
                                     1 + self.plannedMarkup)
                         # consider markup (it is added in the final and subtracted by the inProgress)
 
-        self.currentTotalCostOfUnusedFactors = (self.labor - self.unavailableLabor) * self.params['wage'] + \
+        self.currentTotalCostOfUnusedFactors = (len(self.employees) - self.unavailableLabor) * self.params['wage'] + \
                                                (self.capitalQ - self.unavailableCapitalQ) * \
                                                self.priceOfDurableProductiveGoodsPerUnit * \
                                                self.params['costOfCapital'] / self.params['timeFraction'] + \
@@ -232,14 +229,14 @@ class Firm(BasicAgent):
             * (sum(self.movAvDurations) / len(self.movAvDurations)))
 
         # total cost of labor
-        self.totalCostOfLabor = self.labor * self.params['wage']
+        self.totalCostOfLabor = len(self.employees) * self.params['wage']
 
         # labor adjustments (frequency at orderObservationFrequency)
         if current_time % self.orderObservationFrequency == 0 and current_time > 0:
-            if self.labor > (1 + self.params['tollerance']) * avgRequiredLabor:
-                self.labor = np.ceil((1 + self.params['tollerance']) * avgRequiredLabor)  # max accepted q. of L (firing)
-            if self.labor < (1 / (1 + self.params['tollerance'])) * avgRequiredLabor:
-                self.labor = np.ceil(
+            if len(self.employees) > (1 + self.params['tollerance']) * avgRequiredLabor:
+                self.laborExpect = np.ceil((1 + self.params['tollerance']) * avgRequiredLabor)  # max accepted q. of L (firing)
+            if len(self.employees) < (1 / (1 + self.params['tollerance'])) * avgRequiredLabor:
+                self.laborExpect = np.ceil(
                     (1 / (1 + self.params['tollerance'])) * avgRequiredLabor)  # min accepted q. of L (hiring)
             # if self.uid==(32,0,0): print("***",self.uid, "labM",avgRequiredLabor,"L", self.labor, flush=True)
 
@@ -362,7 +359,7 @@ class Firm(BasicAgent):
         return (self.currentTotalOutput, self.currentTotalCostOfProductionOrder, self.currentTotalCostOfUnusedFactors,
                 self.inventories, \
                 self.inProgressInventories, self.currentTotalLostProduction, self.currentTotalCostOfLostProduction, \
-                self.labor, self.capital, self.grossInvestmentQ)
+                len(self.employees), self.capital, self.grossInvestmentQ)
         # labor, capital modified just above
 
     def receiveSellingOrders(self, shareOfInventoriesBeingSold: float, centralPlannerBuyingPriceCoefficient: float):
@@ -372,9 +369,6 @@ class Firm(BasicAgent):
 
         self.inventory_delta = nominalQuantitySold
         self.capital_delta = centralPlannerBuyingPriceCoefficient * nominalQuantitySold
-
-        self.new_inventory_delta = 0
-        self.new_capital_delta = 0
 
     def computeDebtPayments(self, currentTime):
 
@@ -443,12 +437,13 @@ class Firm(BasicAgent):
     def computeLaborDemand(self):
         currentWorkers = len(self.employees)
 
-        expect_labor = max(0, self.labor)
+        expect_labor = max(0, self.laborExpect)
 
         if currentWorkers > expect_labor:
             self.laborDemand = 0
+            fireWorker = int(currentWorkers - expect_labor)
             random.shuffle(self.employees)
-            for i in range(len(self.employees) - 1, -1, -1):
+            for i in range(len(self.employees) - 1, len(self.employees) - 1 - fireWorker, -1):
                 employee = self.employees[i]
                 employee.employer = None
                 self.employees.pop(i)
@@ -527,12 +522,12 @@ class Firm(BasicAgent):
         """
         # ??the structure of the save is ( ,( )) due to an incosistent use of the
         # save output in update internal structure /fixed in v. 1.1.2???)
-        return (self.uid, (self.labor, self.capital, self.minOrderDuration, self.maxOrderDuration, self.recipe, \
+        return (self.uid, (self.laborExpect, self.capital, self.minOrderDuration, self.maxOrderDuration, self.recipe, \
                            self.laborProductivity, self.maxOrderProduction, self.assetsUsefulLife, self.plannedMarkup, \
                            self.orderObservationFrequency, self.productionType, self.sectorialClass))
 
     def update(self, dynState: Tuple):  # mandatory, used by synchronize
-        self.labor = dynState[0]
+        self.laborExpect = dynState[0]
         self.capital = dynState[1]
         self.minOrderDuration = dynState[2]
         self.maxOrderDuration = dynState[3]

@@ -39,7 +39,7 @@ class Household(BasicAgent):
 
     def getNetIncome(self):
         # taxes
-        if self.isEmployed:
+        if self.employer:
             grossIncome = self.getGrossIncome()
             return grossIncome
         else:
@@ -57,7 +57,7 @@ class Household(BasicAgent):
 
     def computeWage(self):
 
-        employmentRate = self.getMicroReferenceVariableForWage()
+        employmentRate = self.getMicroUnemploymentRate()
         wage = self.wage
 
         if employmentRate > 0.49:

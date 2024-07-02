@@ -14,10 +14,12 @@ class ConsumptionGood:
     liabilityHolder: BasicAgent
     iniValue: float = field(init=False)
     age: int = field(init=False)
-    value: callable = field(init=False)
+    value: float = field(init=False)
 
     def __post_init__(self):
         self.iniValue = self.price * self.quantity
         self.age = self.length
-        # Lambda to calculate value, set up after the object is fully initialized
-        self.value = lambda: self.quantity * self.price
+        self._update_value()
+
+    def _update_value(self):
+        self.value = self.quantity * self.price
