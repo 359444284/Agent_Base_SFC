@@ -94,7 +94,7 @@ class CommercialBank(BasicAgent):
                 interest = advance.interestRate * advance.value
                 principal = advance.iniValue/advance.length
 
-                self.localFlowsNamed.INTEREST_LOAN += interest
+                self.localFlows.INTEREST_LOAN += interest
 
                 
                 reserve.value -= interest + principal
