@@ -58,21 +58,19 @@ class CommercialBank(BasicAgent):
         return self.globalStocks.LOAN + self.globalStocks.RESERVE - self.globalStocks.ADVANCE - self.globalStocks.DEPOSIT
 
     def getCreditSupply(self):
-        capitalsValue = self.getNetWealth()
+        # netWealth = self.getNetWealth()
+        #
+        # desiredLoansStock = max(-netWealth*0.8, 0)
+        #
+        # currentLoans = self.globalStocks.LOAN
+        #
+        # newLoansSupply = max(desiredLoansStock - currentLoans, 0)
+        #
+        # self.loanSupply = newLoansSupply
 
-        # capitalsValue = self.globalStocks[self.DEPOSIT]
-
-        desiredLoansStock = max(capitalsValue*0.6, 0)
-
-        currentLoans = self.globalStocks.LOAN
-
-        newLoansSupply = max(desiredLoansStock - currentLoans, 0)
-
-        # newLoansSupply = 60
-
-        self.loanSupply = newLoansSupply
-
-        return newLoansSupply
+        # return newLoansSupply
+        self.loanSupply = 999999
+        return 999999
 
 
     def getAdvanceDemand(self):

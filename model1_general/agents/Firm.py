@@ -115,6 +115,7 @@ class Firm(BasicAgent):
         #               L productivity is expressed in quantity as orders are expressed in quantity
 
         self.capitalQ = self.capital / self.priceOfDurableProductiveGoodsPerUnit
+        self.localStocks.DEPOSIT[0].value += self.capital / self.priceOfDurableProductiveGoodsPerUnit
 
     def dealingMovAvElements(self, freq, x, y):
 
@@ -264,6 +265,8 @@ class Firm(BasicAgent):
             # obsolescence  and deterioration effect
             self.capitalQ -= requiredCapitalSubstitutionQ
             self.capital -= requiredCapitalSubstitution
+            self.localStocks.DEPOSIT[0].value -= requiredCapitalSubstitutionQ
+            self.localStocks.DEPOSIT[0].value -= requiredCapitalSubstitution
 
             a = (-requiredCapitalSubstitutionQ)
             # A=(-requiredCapitalSubstitution)
@@ -343,6 +346,9 @@ class Firm(BasicAgent):
         # effects
         self.capitalQ += capitalQsubstitutions + capitalQincrement
         self.capital += capitalSubstitutions + capitalIncrement
+
+
+
         self.grossInvestmentQ = capitalQsubstitutions + capitalQincrement
 
         # total cost of capital

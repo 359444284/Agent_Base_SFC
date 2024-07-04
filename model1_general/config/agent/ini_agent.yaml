@@ -127,7 +127,7 @@ agent_params:
   *CREDIT_MARKET_TYPE:
     param_name: []
     &default_credit_market 0:
-      nround: 1
+      nround: 10
 
   *CONSUMPTION_MARKET_TYPE :
     param_name: [ ]
