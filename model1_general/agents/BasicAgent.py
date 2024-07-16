@@ -9,10 +9,17 @@ from typing import Tuple, List, Dict, Optional
 class NamedAccessor:
     __slots__ = ('_agent', '_attribute_name', '_name_to_index')
 
-    def __init__(self, agent, attribute_name, names):
+    def __init__(self, agent, attribute_name, type_classifications):
         self._agent = agent
         self._attribute_name = attribute_name
-        self._name_to_index = {name: i for i, name in enumerate(names)}
+
+        if len(type_classifications) == 0:
+            self._name_to_index = {name: i for i, name in enumerate(type_classifications)}
+        else:
+            if isinstance(type_classifications[0], tuple):
+                self._name_to_index = {name: i for i, (name, _) in enumerate(type_classifications)}
+            else:
+                self._name_to_index = {name: i for i, name in enumerate(type_classifications)}
 
     def __getattr__(self, name):
         try:
@@ -21,7 +28,7 @@ class NamedAccessor:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
     def __setattr__(self, name, value):
-        if name in ('_agent', '_attribute_name', '_name_to_index'):
+        if name in ('_agent', '_attribute_name', '_name_to_index', '_classifications'):
             object.__setattr__(self, name, value)
         else:
             try:
@@ -39,6 +46,7 @@ class NamedAccessor:
             self._agent.__dict__[self._attribute_name][self._name_to_index[key]] = value
         else:
             self._agent.__dict__[self._attribute_name][key] = value
+
 
 class BasicAgent(core.Agent, abc.ABC):
 
@@ -85,19 +93,20 @@ class BasicAgent(core.Agent, abc.ABC):
 
         self.reporterGhostList = []
         self.counterPart = None
+        self.isGhost = False
 
 
-    
     # only call by reporter
     def getInformationTableData(self):
+        if self.isGhost:
 
-        aggregate_data = (
-            self._localFlows.copy(),
-            self.aggrigateStocks(self._localStocks),
-            )
+            aggregate_data = (
+                self._localFlows.copy(),
+                self.aggrigateStocks(self._localStocks),
+                )
 
-        # -- reset the delta to 0
-        return aggregate_data
+            # -- reset the delta to 0
+            return aggregate_data
 
 
     def aggrigateStocks(self, stocks):
@@ -112,16 +121,25 @@ class BasicAgent(core.Agent, abc.ABC):
 
     def mergeInformationTableData(self):
 
-        self._globalStocks[:] = self.aggrigateStocks(self._localStocks)
+        if not self.isGhost:
 
-        # print(self.globalStocks)
-        self._globalFlows.fill(0)
-        self._globalFlows += self._localFlows
+            self._globalStocks[:] = self.aggrigateStocks(self._localStocks)
 
-        for theReporterGhost in self.reporterGhostList:
-            self._globalFlows += theReporterGhost.flowInfo
-            self._globalStocks += theReporterGhost.stockInfo
+            # print(self.globalStocks)
+            self._globalFlows.fill(0)
+            self._globalFlows += self._localFlows
 
+            for theReporterGhost in self.reporterGhostList:
+                self._globalFlows += theReporterGhost.flowInfo
+                self._globalStocks += theReporterGhost.stockInfo
+
+    def generate_balance_sheet(self):
+        balance_sheet = {}
+        for stock_type, is_asset in self.STOCK_TYPES:
+            value = self.globalStocks[stock_type]
+            balance_sheet[stock_type] = value if is_asset else -value
+        balance_sheet['Net Worth'] = self.getNetWealth()
+        return balance_sheet
 
     def resetFlows(self):
         self._globalFlows.fill(0)
@@ -129,6 +147,16 @@ class BasicAgent(core.Agent, abc.ABC):
 
     def updateExpectation(self):
         pass
+
+    def getNetWealth(self):
+        net_wealth = 0
+        for name, is_asset in self.STOCK_TYPES:
+            value = self.globalStocks[name]
+            if is_asset:
+                net_wealth += value
+            else:
+                net_wealth -= value
+        return net_wealth
 
     def save(self):
         return (self.uid, 

@@ -5,7 +5,7 @@ import numpy as np
 from typing import Tuple, List, Dict
 
 class CentralPlanner(BasicAgent):
-    STOCK_TYPES = ['DEPOSIT']
+    STOCK_TYPES = [('DEPOSIT', True)]
 
     def __init__(self, uid:Tuple, model, isGlobal:bool, paramGroup:int,
                  incrementAndSubstitutions:str, noOrderGeneration:bool, askingInvGoodsProduction:str,
@@ -260,6 +260,7 @@ class CentralPlanner(BasicAgent):
 
             aFirm.investmentGoodsGivenByThePlanner = (capitalQsubstitutions, capitalQincrement, \
                                                       capitalSubstitutions, capitalIncrement)
+
 
 
     def save(self):

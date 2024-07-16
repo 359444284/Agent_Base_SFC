@@ -6,9 +6,9 @@ from typing import Tuple, List, Dict
 class CommercialBank(BasicAgent):
     # stock
 
-    STOCK_TYPES = ['DEPOSIT', 'RESERVE', 'ADVANCE', 'LOAN']
+    STOCK_TYPES = [('DEPOSIT', False), ('RESERVE', True), ('ADVANCE', False), ('LOAN', True)]
 
-    FLOW_TYPES = ['INTEREST_DEPOSIT', 'INTEREST_LOAN']
+    FLOW_TYPES = [('INTEREST_DEPOSIT', False), ('INTEREST_ADVANCE', False)]
 
 
     
@@ -54,23 +54,20 @@ class CommercialBank(BasicAgent):
             # depositor.localFlows[depositor.INTEREST_DEPOSIT] += payInterests
             deposit.value += payInterests
 
-    def getNetWealth(self):
-        return self.globalStocks.LOAN + self.globalStocks.RESERVE - self.globalStocks.ADVANCE - self.globalStocks.DEPOSIT
-
     def getCreditSupply(self):
-        # netWealth = self.getNetWealth()
-        #
-        # desiredLoansStock = max(-netWealth*0.8, 0)
-        #
-        # currentLoans = self.globalStocks.LOAN
-        #
-        # newLoansSupply = max(desiredLoansStock - currentLoans, 0)
-        #
-        # self.loanSupply = newLoansSupply
+        netWealth = self.getNetWealth()
 
-        # return newLoansSupply
-        self.loanSupply = 999999
-        return 999999
+        desiredLoansStock = max(-netWealth*0.8, 0)
+
+        currentLoans = self.globalStocks.LOAN
+
+        newLoansSupply = max(desiredLoansStock - currentLoans, 0)
+
+        self.loanSupply = newLoansSupply
+
+        return newLoansSupply
+        # self.loanSupply = 999999
+        # return 999999
 
 
     def getAdvanceDemand(self):
@@ -92,7 +89,7 @@ class CommercialBank(BasicAgent):
                 interest = advance.interestRate * advance.value
                 principal = advance.iniValue/advance.length
 
-                self.localFlows.INTEREST_LOAN += interest
+                self.localFlows.INTEREST_ADVANCE += interest
 
                 
                 reserve.value -= interest + principal
@@ -111,7 +108,7 @@ class CommercialBank(BasicAgent):
         self.myBalancesheet[currentTime, 3] = self.globalStocks.LOAN
 
         self.myBalancesheet[currentTime, 4] = self.globalFlows.INTEREST_DEPOSIT
-        self.myBalancesheet[currentTime, 5] = self.globalFlows.INTEREST_LOAN
+        self.myBalancesheet[currentTime, 5] = self.globalFlows.INTEREST_ADVANCE
 
 
         self.myBalancesheet[currentTime, 6] = netWealth

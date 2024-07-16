@@ -7,7 +7,7 @@ from typing import Tuple, List, Dict
 
 class CentralBank(BasicAgent):
 
-    STOCK_TYPES = ['DEPOSIT_CB', 'RESERVE', 'ADVANCE']
+    STOCK_TYPES = [('RESERVE', False), ('ADVANCE', True)]
 
     FLOW_TYPES = []
 
@@ -18,8 +18,6 @@ class CentralBank(BasicAgent):
         self.params = model.params
 
         self.advanceInterestRate = advanceInterestRate
-
-
 
 
     # def save(self):

@@ -13,7 +13,7 @@ def any(iterable):
 
 
 class Firm(BasicAgent):
-    STOCK_TYPES = ['DEPOSIT', 'LOAN', 'CONS_GOOD']
+    STOCK_TYPES = [('DEPOSIT', True), ('LOAN', False), ('CONS_GOOD', True), ('CAP_GOOD', True)]
 
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
                  labor: int, capital:float, minOrderDuration: int, maxOrderDuration: int, recipe: float, laborProductivity: float, maxOrderProduction: float, \
@@ -114,8 +114,24 @@ class Firm(BasicAgent):
         #
         #               L productivity is expressed in quantity as orders are expressed in quantity
 
-        self.capitalQ = self.capital / self.priceOfDurableProductiveGoodsPerUnit
-        self.localStocks.DEPOSIT[0].value += self.capital / self.priceOfDurableProductiveGoodsPerUnit
+        self.resetCapitalQ()
+
+    # For simplify, we assume that firms do not need to buy capital goods.
+    def resetCapitalQ(self):
+        capitalQ_ratio = 0.8
+        total_capital = (self.capital + self.capitalQ * self.priceOfDurableProductiveGoodsPerUnit)
+        reallocatedCapitalQ =  total_capital * capitalQ_ratio
+        reallocatedCapital = total_capital * (1 - capitalQ_ratio)
+
+        self.capitalQ = reallocatedCapitalQ / self.priceOfDurableProductiveGoodsPerUnit
+        self.localStocks.CAP_GOOD[0].value = reallocatedCapitalQ / self.priceOfDurableProductiveGoodsPerUnit
+
+        self.capital = reallocatedCapital
+        self.localStocks.DEPOSIT[0].value = reallocatedCapital
+
+        # self.capitalQ = self.capital / self.priceOfDurableProductiveGoodsPerUnit
+        # self.localStocks.CAP_GOOD[0].value = self.capital / self.priceOfDurableProductiveGoodsPerUnit
+
 
     def dealingMovAvElements(self, freq, x, y):
 
@@ -139,7 +155,7 @@ class Firm(BasicAgent):
         #          "req L", requiredLabor, "L", self.labor)
 
         # create a new aPP or skip the order
-        if requiredLabor <= len(self.employees) and requiredCapitalQ <= self.capitalQ:
+        if requiredLabor <= len(self.employees) and requiredCapitalQ <= self.localStocks.CAP_GOOD[0].value:
             self.productiveProcessIdGenerator += 1
             productiveProcessId = (self.uid[0], self.uid[1], self.uid[2], self.productiveProcessIdGenerator)
             aProductiveProcess = ProductiveProcess(productiveProcessId, productionOrderQuantityByPeriod, \
@@ -170,7 +186,7 @@ class Firm(BasicAgent):
 
             if not aProductiveProcess.hasResources and \
                     (len(self.employees) - self.unavailableLabor >= aProductiveProcess.requiredLabor and \
-                     self.capitalQ - self.unavailableCapitalQ >= aProductiveProcess.requiredCapitalQ):
+                     self.localStocks.CAP_GOOD[0].value - self.unavailableCapitalQ >= aProductiveProcess.requiredCapitalQ):
                 self.unavailableLabor += aProductiveProcess.requiredLabor
                 self.unavailableCapitalQ += aProductiveProcess.requiredCapitalQ
                 aProductiveProcess.hasResources = True
@@ -209,17 +225,17 @@ class Firm(BasicAgent):
                     else:
                         self.inventories += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
                         cons_goods = self.localStocks.CONS_GOOD[0]
-                        cons_goods.quantity += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
 
+                        cons_goods.quantity += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
                         self.inProgressInventories -= cost * (aProductiveProcess.orderDuration - 1) * (
                                     1 + self.plannedMarkup)
                         # consider markup (it is added in the final and subtracted by the inProgress)
 
         self.currentTotalCostOfUnusedFactors = (len(self.employees) - self.unavailableLabor) * self.params['wage'] + \
-                                               (self.capitalQ - self.unavailableCapitalQ) * \
+                                               (self.localStocks.CAP_GOOD[0].value - self.unavailableCapitalQ) * \
                                                self.priceOfDurableProductiveGoodsPerUnit * \
                                                self.params['costOfCapital'] / self.params['timeFraction'] + \
-                                               (self.capitalQ - self.unavailableCapitalQ) * \
+                                               (self.localStocks.CAP_GOOD[0].value - self.unavailableCapitalQ) * \
                                                self.priceOfDurableProductiveGoodsPerUnit / \
                                                (self.assetsUsefulLife * self.params['timeFraction'])
         # considering substitutions also for the idle capital
@@ -245,7 +261,7 @@ class Firm(BasicAgent):
         # here the following variables are disambiguated between actual and desired values, so they appear in a double shape:
         # i) capital and capitalQ, ii) desiredCapitalSubstistutions and desiredCapitalQsubstitutions
 
-        self.capitalBeforeAdjustment = self.capital
+        self.capitalBeforeAdjustment = self.localStocks.DEPOSIT[0].value
         desiredCapitalQsubstitutions = 0
         desiredCapitalSubstitutions = 0
         requiredCapitalQincrement = 0
@@ -253,20 +269,20 @@ class Firm(BasicAgent):
 
         if current_time > self.orderObservationFrequency:  # no corrections before the end of the first correction interval
             # where orders are under the standard flow of the firm
-            capitalQmin = self.capitalQ / (1 + self.params['tollerance'])
-            capitalQmax = self.capitalQ * (1 + self.params['tollerance'])
+            capitalQmin = self.localStocks.CAP_GOOD[0].value / (1 + self.params['tollerance'])
+            capitalQmax = self.localStocks.CAP_GOOD[0].value * (1 + self.params['tollerance'])
 
             avgRequiredCapital = avgRequiredLabor * self.recipe
             avgRequiredCapitalQ = avgRequiredCapital / self.currentPriceOfDurableProductiveGoodsPerUnit
 
-            requiredCapitalSubstitution = self.capital / (self.assetsUsefulLife * self.params['timeFraction'])
-            requiredCapitalSubstitutionQ = self.capitalQ / (self.assetsUsefulLife * self.params['timeFraction'])
+            requiredCapitalSubstitution = self.localStocks.DEPOSIT[0].value / (self.assetsUsefulLife * self.params['timeFraction'])
+            requiredCapitalSubstitutionQ = self.localStocks.CAP_GOOD[0].value / (self.assetsUsefulLife * self.params['timeFraction'])
 
             # obsolescence  and deterioration effect
             self.capitalQ -= requiredCapitalSubstitutionQ
             self.capital -= requiredCapitalSubstitution
-            self.localStocks.DEPOSIT[0].value -= requiredCapitalSubstitutionQ
             self.localStocks.DEPOSIT[0].value -= requiredCapitalSubstitution
+            self.localStocks.CAP_GOOD[0].value -= requiredCapitalSubstitutionQ
 
             a = (-requiredCapitalSubstitutionQ)
             # A=(-requiredCapitalSubstitution)
@@ -346,7 +362,8 @@ class Firm(BasicAgent):
         # effects
         self.capitalQ += capitalQsubstitutions + capitalQincrement
         self.capital += capitalSubstitutions + capitalIncrement
-
+        self.localStocks.CAP_GOOD[0].value += capitalQsubstitutions + capitalQincrement
+        self.localStocks.DEPOSIT[0].value -= (capitalQsubstitutions + capitalQincrement)*self.currentPriceOfDurableProductiveGoodsPerUnit
 
 
         self.grossInvestmentQ = capitalQsubstitutions + capitalQincrement
@@ -365,7 +382,7 @@ class Firm(BasicAgent):
         return (self.currentTotalOutput, self.currentTotalCostOfProductionOrder, self.currentTotalCostOfUnusedFactors,
                 self.inventories, \
                 self.inProgressInventories, self.currentTotalLostProduction, self.currentTotalCostOfLostProduction, \
-                len(self.employees), self.capital, self.grossInvestmentQ)
+                len(self.employees), self.localStocks.DEPOSIT[0].value, self.grossInvestmentQ)
         # labor, capital modified just above
 
     def receiveSellingOrders(self, shareOfInventoriesBeingSold: float, centralPlannerBuyingPriceCoefficient: float):
@@ -459,6 +476,7 @@ class Firm(BasicAgent):
         return self.laborDemand
 
     def makeBalancesheet(self, current_time):
+
         self.totalCosts = self.currentTotalCostOfProductionOrder + self.currentTotalCostOfUnusedFactors
         """
         if params['usingMarkup']:
@@ -528,7 +546,7 @@ class Firm(BasicAgent):
         """
         # ??the structure of the save is ( ,( )) due to an incosistent use of the
         # save output in update internal structure /fixed in v. 1.1.2???)
-        return (self.uid, (self.laborExpect, self.capital, self.minOrderDuration, self.maxOrderDuration, self.recipe, \
+        return (self.uid, (self.laborExpect, self.localStocks.DEPOSIT[0].value, self.minOrderDuration, self.maxOrderDuration, self.recipe, \
                            self.laborProductivity, self.maxOrderProduction, self.assetsUsefulLife, self.plannedMarkup, \
                            self.orderObservationFrequency, self.productionType, self.sectorialClass))
 

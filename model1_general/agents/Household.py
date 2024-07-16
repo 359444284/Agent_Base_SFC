@@ -10,7 +10,7 @@ from typing import Tuple, List, Dict
 
 class Household(BasicAgent):
     # stock
-    STOCK_TYPES = ['DEPOSIT', 'CONS_GOOD']
+    STOCK_TYPES = [('DEPOSIT', True), ('CONS_GOOD', True)]
 
     LAG_TYPES = ['EMPLOYED']
 
