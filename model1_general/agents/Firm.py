@@ -14,6 +14,7 @@ def any(iterable):
 
 class Firm(BasicAgent):
     STOCK_TYPES = [('DEPOSIT', True), ('LOAN', False), ('CONS_GOOD', True), ('CAP_GOOD', True)]
+    FLOW_TYPES = [('INTEREST_DEPOSIT', True), ('INTEREST_LOAN', False)]
 
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
                  labor: int, capital:float, minOrderDuration: int, maxOrderDuration: int, recipe: float, laborProductivity: float, maxOrderProduction: float, \
@@ -438,6 +439,8 @@ class Firm(BasicAgent):
                     if deposit.liabilityHolder != loan.assetHolder:
                         loan.assetHolder.localStocks.RESERVE[0].value += valueToPay
                         deposit.liabilityHolder.localStocks.RESERVE[0].value -= valueToPay
+                        loan.assetHolder.localFlows.INTEREST_LOAN += valueToPay
+                        deposit.liabilityHolder.localFlows.INTEREST_LOAN += valueToPay
                     loan.value -= self.debtPayments[i, 1]
         else:
             print(f'Firm:{self.uid}  Default due to debt service')

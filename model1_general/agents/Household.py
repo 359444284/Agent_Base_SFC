@@ -12,6 +12,7 @@ class Household(BasicAgent):
     # stock
     STOCK_TYPES = [('DEPOSIT', True), ('CONS_GOOD', True)]
 
+    FLOW_TYPES = [('INTEREST_DEPOSIT', True)]
     LAG_TYPES = ['EMPLOYED']
 
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,):

@@ -8,7 +8,7 @@ class CommercialBank(BasicAgent):
 
     STOCK_TYPES = [('DEPOSIT', False), ('RESERVE', True), ('ADVANCE', False), ('LOAN', True)]
 
-    FLOW_TYPES = [('INTEREST_DEPOSIT', False), ('INTEREST_ADVANCE', False)]
+    FLOW_TYPES = [('INTEREST_DEPOSIT', False), ('INTEREST_LOAN', True), ('INTEREST_ADVANCE', False)]
 
 
     
@@ -51,7 +51,7 @@ class CommercialBank(BasicAgent):
             depositor = deposit.assetHolder
             payInterests = self.depositInterestRate * deposit.value
             self.localFlows.INTEREST_DEPOSIT += payInterests
-            # depositor.localFlows[depositor.INTEREST_DEPOSIT] += payInterests
+            depositor.localFlows.INTEREST_DEPOSIT += payInterests
             deposit.value += payInterests
 
     def getCreditSupply(self):
@@ -90,7 +90,7 @@ class CommercialBank(BasicAgent):
                 principal = advance.iniValue/advance.length
 
                 self.localFlows.INTEREST_ADVANCE += interest
-
+                advance.liabilityHolder.INTEREST_ADVANCE += interest
                 
                 reserve.value -= interest + principal
                 advance.value -= principal

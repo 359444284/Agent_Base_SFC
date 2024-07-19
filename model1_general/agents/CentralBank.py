@@ -9,7 +9,7 @@ class CentralBank(BasicAgent):
 
     STOCK_TYPES = [('RESERVE', False), ('ADVANCE', True)]
 
-    FLOW_TYPES = []
+    FLOW_TYPES = [('INTEREST_ADVANCE', True)]
 
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
     advanceInterestRate:float):

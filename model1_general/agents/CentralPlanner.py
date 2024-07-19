@@ -6,6 +6,7 @@ from typing import Tuple, List, Dict
 
 class CentralPlanner(BasicAgent):
     STOCK_TYPES = [('DEPOSIT', True)]
+    FLOW_TYPES = [('INTEREST_DEPOSIT', True)]
 
     def __init__(self, uid:Tuple, model, isGlobal:bool, paramGroup:int,
                  incrementAndSubstitutions:str, noOrderGeneration:bool, askingInvGoodsProduction:str,
