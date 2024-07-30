@@ -32,9 +32,9 @@ class CentralPlanner(BasicAgent):
 
         self.proportionalValue = 0
         self.proportionalValue = 0
-
-        self._globalFlows = np.zeros(8)
-        self._localFlows = np.zeros(8)
+        
+        self.local_extra_info = np.zeros(8)
+        self.global_extra_info = np.zeros(8)
 
 
     def preparingActions(self, model):
@@ -50,17 +50,17 @@ class CentralPlanner(BasicAgent):
 
             # the planner has to know whether it received the investment goods produced by the firms
             # and it will read it from this information table, which is updated at t-1
-            self._localFlows[0] = sum(model.totalInvGoodsRevenues[model.t() - 1])
-            self._localFlows[1] = sum(model.totalInvGoodsInventories[model.t() - 1])
-            self._localFlows[2] = sum(model.totalGrossInvestmentQ[model.t() - 1])
+            self.local_extra_info[0] = sum(model.totalInvGoodsRevenues[model.t() - 1])
+            self.local_extra_info[1] = sum(model.totalInvGoodsInventories[model.t() - 1])
+            self.local_extra_info[2] = sum(model.totalGrossInvestmentQ[model.t() - 1])
             currentPrice = model.context.agent(
                 (0, self.params['FIRM_TYPE'], model.rank)).currentPriceOfDurableProductiveGoodsPerUnit
-            self._localFlows[3] = sum(model.totalGrossInvestmentQ[model.t() - 1]) * currentPrice
+            self.local_extra_info[3] = sum(model.totalGrossInvestmentQ[model.t() - 1]) * currentPrice
 
-            self.informationTable[model.t(), 0] = self._localFlows[0]
-            self.informationTable[model.t(), 1] = self._localFlows[1]
-            self.informationTable[model.t(), 2] = self._localFlows[2]
-            self.informationTable[model.t(), 3] = self._localFlows[3]
+            self.informationTable[model.t(), 0] = self.local_extra_info[0]
+            self.informationTable[model.t(), 1] = self.local_extra_info[1]
+            self.informationTable[model.t(), 2] = self.local_extra_info[2]
+            self.informationTable[model.t(), 3] = self.local_extra_info[3]
 
     def diffusingProductionOrders(self, model):
 
@@ -151,8 +151,6 @@ class CentralPlanner(BasicAgent):
                                           + model.rng.random() * self.params['rangeOfInventoriesBeingSold']
             centralPlannerBuyingPriceCoefficient = self.params['centralPlannerPriceCoefficient']  # 0.8 + rng.random()*0.4
             aFirm.receiveSellingOrders(shareOfInventoriesBeingSold, centralPlannerBuyingPriceCoefficient)
-            aFirm.tmpshareOfInventoriesBeingSold = shareOfInventoriesBeingSold
-            aFirm.tmpcentralPlannerBuyingPriceCoefficient = centralPlannerBuyingPriceCoefficient
 
     def askFirmsInvGoodsDemand(self, model):
 
@@ -162,19 +160,19 @@ class CentralPlanner(BasicAgent):
 
 
             # TOTALIZING INVESTMENT GOODS REQUESTS
-            self._localFlows[4] += desiredCapitalQsubstitutions
-            self._localFlows[5] += requiredCapitalQincrement
-            self._localFlows[6] += desiredCapitalSubstitutions
-            self._localFlows[7] += requiredCapitalIncrement
+            self.local_extra_info[4] += desiredCapitalQsubstitutions
+            self.local_extra_info[5] += requiredCapitalQincrement
+            self.local_extra_info[6] += desiredCapitalSubstitutions
+            self.local_extra_info[7] += requiredCapitalIncrement
 
-        # print(self._localFlows[4:8])
+        # print(self.local_extra_info[4:8])
 
 
-        self.informationTable[model.t(), 4] = self._localFlows[6] + self._localFlows[7]
+        self.informationTable[model.t(), 4] = self.local_extra_info[6] + self.local_extra_info[7]
 
     def setProportionalValue(self, model):
-        if (self._globalFlows[6] + self._globalFlows[7]) != 0:
-            self.proportionalValue = self._globalFlows[0] / (self._globalFlows[6] + self._globalFlows[7])
+        if (self.global_extra_info[6] + self.global_extra_info[7]) != 0:
+            self.proportionalValue = self.global_extra_info[0] / (self.global_extra_info[6] + self.global_extra_info[7])
 
     def executeInvestmentGoodsDemandFromFirms(self, model):
         for aFirm in model.context.agents(agent_type=self.params['FIRM_TYPE']):
@@ -225,7 +223,7 @@ class CentralPlanner(BasicAgent):
 
             if self.incrementAndSubstitutions == 'proportionally':
 
-                if (self._localFlows[6] + self._localFlows[7]) == 0:
+                if (self.local_extra_info[6] + self.local_extra_info[7]) == 0:
                     capitalQsubstitutions = 0
                     capitalQincrement = 0
                     capitalSubstitutions = 0
@@ -262,8 +260,40 @@ class CentralPlanner(BasicAgent):
             aFirm.investmentGoodsGivenByThePlanner = (capitalQsubstitutions, capitalQincrement, \
                                                       capitalSubstitutions, capitalIncrement)
 
+    def getInformationTableData(self):
+        if self.isGhost:
+            aggregate_data = (
+                self._localFlows.copy(),
+                self.aggrigateStocks(self._localStocks),
+                self.local_extra_info.copy()
+            )
 
+            # -- reset the delta to 0
+            return aggregate_data
 
+    def mergeInformationTableData(self):
+
+        if not self.isGhost:
+
+            self._globalStocks[:] = self.aggrigateStocks(self._localStocks)
+
+            # print(self.globalStocks)
+            self._globalFlows.fill(0)
+            self._globalFlows += self._localFlows
+            self.global_extra_info.fill(0)
+            self.global_extra_info += self.local_extra_info
+
+            for theReporterGhost in self.reporterGhostList:
+                self._globalFlows += theReporterGhost.tmp_info[0]
+                self._globalStocks += theReporterGhost.tmp_info[1]
+                self.global_extra_info += theReporterGhost.tmp_info[2]
+    
+    def resetFlows(self):
+        self._globalFlows.fill(0)
+        self._localFlows.fill(0)
+        self.global_extra_info.fill(0)
+        self.local_extra_info.fill(0)
+        
     def save(self):
         basic_info = super().save()
 

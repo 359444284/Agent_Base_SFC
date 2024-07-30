@@ -107,6 +107,9 @@ class BasicMarket(core.Agent, ABC):
         alive_demander = set(self.globalDemanderInfos.keys())
         remind_supplier = [len(ls) for ls in self.globalSupplierUids]
 
+        for i, localSupplierUids in enumerate(self.globalSupplierUids):
+            self.globalSupplierUids[i] = [uid for uid in localSupplierUids if uid in self.globalSupplierInfos]
+
         for _ in range(self.nround):
             self.shuffle_demanders(alive_demander)
             demander_idx = [len(ls) for ls in self.globalDemanderUids]

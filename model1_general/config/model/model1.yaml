@@ -10,13 +10,25 @@ costOfCapital: 0.1
 timeFraction: 12 #52
 tollerance: 0.10
 investmentGoods: [1] #list of type of investment goods (must be consistent with firm-features.csv)
-minOfInventoriesBeingSold: 0.75
+minOfInventoriesBeingSold: 0.50
 rangeOfInventoriesBeingSold: 0.25 #must be complement to 1 with the above minOfInventoriesBeingSold
-usingMarkup: True
-centralPlannerPriceCoefficient: 1.0 #must be 1 if usingMarkup == True
+usingMarkup: False
+centralPlannerPriceCoefficient: 5 #must be 1 if usingMarkup == True
 minOrderAsAShareOfMaxOrderProduction: 0.25  #upon 1
 capacityMargin: 0.2 #upon 1
 #0.9467354673552263,100 100 1000
 #0:8312437129805477, 1000 100 1000
 loanObservationFrequency : 1
 
+
+# temp replacement of central planner
+askingInvGoodsProduction: 'max' # OR 'regular' (basic option) OR 'min' OR 'max'
+investmentVariation: 0.8 # positive or negative in (-1,+1)
+#used as 1+investmentVariation for the cases 'min' (must be negative) or 'max' (must be positive)
+#################################################
+#order generation (alternatively)
+noOrderGeneration: false
+randomOrderGeneration: true
+#################################################
+#modify duration
+durationCoeff: 2

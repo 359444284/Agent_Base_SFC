@@ -12,7 +12,7 @@ class Household(BasicAgent):
     # stock
     STOCK_TYPES = [('DEPOSIT', True), ('CONS_GOOD', True)]
 
-    FLOW_TYPES = [('INTEREST_DEPOSIT', True)]
+    FLOW_TYPES = [('INTEREST_DEPOSIT', True), ('CONSUMPTION', True)]
     LAG_TYPES = ['EMPLOYED']
 
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,):
@@ -58,17 +58,17 @@ class Household(BasicAgent):
 
     def computeWage(self):
 
-        employmentRate = self.getMicroUnemploymentRate()
-        wage = self.wage
-
-        if employmentRate > 0.49:
-            wage -= 0.5 * wage * random.random()
-        else:
-            macroReferenceVariable = self.getMacroUnemploymentRate()
-            if macroReferenceVariable <= 0.08:
-                wage += 0.5 * wage * random.random()
-
-        self.wage = max(wage, 0)
+        # employmentRate = self.getMicroUnemploymentRate()
+        # wage = self.wage
+        #
+        # if employmentRate > 0.49:
+        #     wage -= 0.5 * wage * random.random()
+        # else:
+        #     macroReferenceVariable = self.getMacroUnemploymentRate()
+        #     if macroReferenceVariable <= 0.08:
+        #         wage += 0.5 * wage * random.random()
+        #
+        # self.wage = max(wage, 0)
         return self.wage
 
 

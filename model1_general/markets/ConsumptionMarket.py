@@ -95,15 +95,27 @@ class ComsumptionMarket(BasicMarket):
             random.shuffle(self.globalDemanderUids[i])
 
     def match_suppliers(self, rank_id, remind_suppliers):
-        supplierUid = random.choice(self.globalSupplierUids[rank_id])
-        while self.globalSupplierInfos[supplierUid][0] == 0:
-            self.globalSupplierUids[rank_id].remove(supplierUid)
-            remind_suppliers[rank_id] -= 1
-            if remind_suppliers[rank_id] <= 0:
-                remind_suppliers[rank_id] = 0
-                return None
-            supplierUid = random.choice(self.globalSupplierUids[rank_id])
-        return supplierUid
+        # supplierUid = random.choice(self.globalSupplierUids[rank_id])
+        # while self.globalSupplierInfos[supplierUid][0] == 0:
+        #     self.globalSupplierUids[rank_id].remove(supplierUid)
+        #     remind_suppliers[rank_id] -= 1
+        #     if remind_suppliers[rank_id] <= 0:
+        #         remind_suppliers[rank_id] = 0
+        #         return None
+        #     supplierUid = random.choice(self.globalSupplierUids[rank_id])
+        # return supplierUid
+
+        supplierUids = random.choices(self.globalSupplierUids[rank_id], k=3)
+        minPrice = np.inf
+        minUid = None
+        for uid in supplierUids:
+            price, offeredQuantity = self.globalSupplierInfos[uid]
+            assert offeredQuantity > 0
+
+            if price < minPrice:
+                minPrice = price
+                minUid = uid
+        return minUid
 
     def checksum(self):
         for v in self.globalSupplierInfos.values():

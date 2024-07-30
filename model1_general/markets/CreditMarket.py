@@ -80,6 +80,7 @@ class CreditMarket(BasicMarket):
         for i, demanders in enumerate(self.globalDemanderUids):
             self.globalDemanderUids[i] = [uid for uid in demanders if uid in alive_demanders]
             random.shuffle(self.globalDemanderUids[i])
+
     def match_suppliers(self, rank_id, remind_suppliers):
         supplierUid = random.choice(self.globalSupplierUids[rank_id])
         while self.globalSupplierInfos[supplierUid][0] == 0:
@@ -92,6 +93,9 @@ class CreditMarket(BasicMarket):
 
         return supplierUid
 
+
+
+
     def checksum(self):
         for v in self.globalSupplierInfos.values():
             if v[0] < 0:
@@ -100,6 +104,10 @@ class CreditMarket(BasicMarket):
         for v in self.globalDemanderInfos.values():
             if v[0] < 0:
                 raise ValueError
+
+
+
+
 
 
 

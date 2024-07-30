@@ -6,7 +6,7 @@ from typing import Tuple, List, Dict
 class CommercialBank(BasicAgent):
     # stock
 
-    STOCK_TYPES = [('DEPOSIT', False), ('RESERVE', True), ('ADVANCE', False), ('LOAN', True)]
+    STOCK_TYPES = [('DEPOSIT', False), ('RESERVE', True), ('ADVANCE', False), ('LOAN', True), ('DEPOSIT_Q', False)]
 
     FLOW_TYPES = [('INTEREST_DEPOSIT', False), ('INTEREST_LOAN', True), ('INTEREST_ADVANCE', False)]
 
@@ -90,7 +90,7 @@ class CommercialBank(BasicAgent):
                 principal = advance.iniValue/advance.length
 
                 self.localFlows.INTEREST_ADVANCE += interest
-                advance.liabilityHolder.INTEREST_ADVANCE += interest
+                advance.assetHolder.localFlows.INTEREST_ADVANCE += interest
                 
                 reserve.value -= interest + principal
                 advance.value -= principal
@@ -98,8 +98,6 @@ class CommercialBank(BasicAgent):
         
 
     def makeBalancesheet(self, currentTime):
-
-
 
         netWealth = self.getNetWealth()
         self.myBalancesheet[currentTime, 0] = self.globalStocks.DEPOSIT

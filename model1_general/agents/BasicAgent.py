@@ -125,13 +125,12 @@ class BasicAgent(core.Agent, abc.ABC):
 
             self._globalStocks[:] = self.aggrigateStocks(self._localStocks)
 
-            # print(self.globalStocks)
             self._globalFlows.fill(0)
             self._globalFlows += self._localFlows
 
             for theReporterGhost in self.reporterGhostList:
-                self._globalFlows += theReporterGhost.flowInfo
-                self._globalStocks += theReporterGhost.stockInfo
+                self._globalFlows += theReporterGhost.tmp_info[0]
+                self._globalStocks += theReporterGhost.tmp_info[1]
 
     def generate_balance_sheet(self):
         balance_sheet = {}
@@ -140,6 +139,14 @@ class BasicAgent(core.Agent, abc.ABC):
             balance_sheet[stock_type] = value if is_asset else -value
         balance_sheet['Net Worth'] = self.getNetWealth()
         return balance_sheet
+
+    def generate_flows(self):
+        flows = {}
+        for flow_type, is_inflow in self.FLOW_TYPES:
+            value = self.globalFlows[flow_type]
+            flows[flow_type] = value if is_inflow else -value
+
+        return flows
 
     def resetFlows(self):
         self._globalFlows.fill(0)

@@ -147,8 +147,8 @@ agent_resources:
 
   *HOUSEHOLD_TYPE:
     &default_household_resource 0:
-      dp_max: 100
-      dp_min: 100
+      dp_max: 1000
+      dp_min: 1000
 
   *CEN_BANK_TYPE:
     &default_cen_bank_resource 0:
@@ -430,13 +430,13 @@ ini_agents_unique:
     resourceGroup:
       *default_cen_bank_resource
 
-  *CEN_PLANNER_TYPE :
-    isGlobal: true
-    specific_rank:
-    paramGroup:
-      [*default_cen_planner]
-    resourceGroup:
-      *default_cen_planner_resource
+#  *CEN_PLANNER_TYPE :
+#    isGlobal: true
+#    specific_rank:
+#    paramGroup:
+#      [*default_cen_planner]
+#    resourceGroup:
+#      *default_cen_planner_resource
 
   *CREDIT_MARKET_TYPE :
     isGlobal: true

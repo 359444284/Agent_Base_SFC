@@ -11,12 +11,14 @@ class AgentReporter(core.Agent):
         self.flowInfo = []  # superflous
         self.stockInfo = []
 
+        self.tmp_info = None
+
         self.connectAgent = None
 
 
     def reciveInformationLastCol(self):
         
-        self.flowInfo, self.stockInfo = self.connectAgent.getInformationTableData()
+        self.tmp_info = self.connectAgent.getInformationTableData()
     
     def save(self) -> Tuple: # mandatory, used by request_agents and by synchronizazion
         """
@@ -29,10 +31,12 @@ class AgentReporter(core.Agent):
         # save output in update internal structure /fixed in v. 1.1.2???)
         #return (self.uid,(self.informationTable,)) #the comma is relevant for positional reasons
         #print(rank, "save",self.informationTableLastCol,flush=True)
-        return (self.uid,(self.flowInfo, self.stockInfo))
+        return (self.uid, self.tmp_info)
 
     def update(self, dynState: Tuple): # mandatory, used by synchronize
         #print(rank, "updt",dynState,flush=True)
         #print("from reporter upddat, rank=",rank,"t=",t(),dynState,flush=True)
-        self.flowInfo = dynState[0]  # superflous
-        self.stockInfo = dynState[1]
+        # self.flowInfo = dynState[0]  # superflous
+        # self.stockInfo = dynState[1]
+
+        self.tmp_info = dynState
