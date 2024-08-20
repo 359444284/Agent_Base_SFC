@@ -14,8 +14,9 @@ def any(iterable):
 
 class Firm(BasicAgent):
     STOCK_TYPES = [('DEPOSIT', True), ('LOAN', False), ('CONS_GOOD', True), ('DEPOSIT_Q', True)]
-    FLOW_TYPES = [('INTEREST_DEPOSIT', True), ('INTEREST_LOAN', False), ('CONSUMPTION', False)]
+    FLOW_TYPES = [('INTEREST_DEPOSIT', True), ('INTEREST_LOAN', False), ('CONSUMPTION', True), ('WAGE', False)]
     LAG_TYPES = ['REAL_SALES']
+
 
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,
                  labor: int, capital:float, minOrderDuration: int, maxOrderDuration: int, recipe: float, laborProductivity: float, maxOrderProduction: float, \
@@ -26,7 +27,6 @@ class Firm(BasicAgent):
         self.params = model.params
         self.model = model
 
-        self.laborExpect = labor
         self.iniCapital = capital
         self.minOrderDuration = minOrderDuration
         self.maxOrderDuration = maxOrderDuration
@@ -39,6 +39,9 @@ class Firm(BasicAgent):
         self.productionType = productionType
         self.sectorialClass = paramGroup
 
+
+        # global params
+        self.laborExpect = labor
 
         # local stock attributes
 
@@ -62,7 +65,12 @@ class Firm(BasicAgent):
         self.desiredOutput = None
         self.price = 0
         self.markUp = 0
+
+        self.real_sales = 0
+
+        # lag variable
         self.lag_sales = 0
+        self.lag_normal_inventories = 0
         self.myBalancesheet = np.zeros((self.params['howManyCycles'], 20))
 
         self.movAvQuantitiesInEachPeriod = []
@@ -72,8 +80,7 @@ class Firm(BasicAgent):
 
         self.theCentralPlanner = 0
 
-
-
+        self.isDead = False
 
         self.employees = []
 
@@ -231,6 +238,7 @@ class Firm(BasicAgent):
                         cons_goods = self.localStocks.CONS_GOOD[0]
 
                         cons_goods.quantity += cost * aProductiveProcess.orderDuration * (1 + self.plannedMarkup)
+
                         self.inProgressInventories -= cost * (aProductiveProcess.orderDuration - 1) * (
                                     1 + self.plannedMarkup)
                         # consider markup (it is added in the final and subtracted by the inProgress)
@@ -250,7 +258,7 @@ class Firm(BasicAgent):
             * (sum(self.movAvDurations) / len(self.movAvDurations)))
 
         # total cost of labor
-        self.totalCostOfLabor = len(self.employees) * self.params['wage']
+        # self.totalCostOfLabor = len(self.employees) * self.params['wage']
 
         # labor adjustments (frequency at orderObservationFrequency)
         if current_time % self.orderObservationFrequency == 0 and current_time > 0:
@@ -363,26 +371,29 @@ class Firm(BasicAgent):
 
         desiredCapitalQChange = (self.desiredCapitalQsubstitutions + self.requiredCapitalQincrement)
         desiredCapitalChange = self.desiredCapitalSubstitutions + self.requiredCapitalIncrement
+
         assert desiredCapitalQChange >= 0
         assert desiredCapitalChange >= 0
 
         realCapitalQChange = 0
         if self.receiveLoan > 0:
             # print(self.receiveLoan, desiredCapitalQChange*self.currentPriceOfDurableProductiveGoodsPerUnit, desiredCapitalChange)
-            qRatio = desiredCapitalQChange / (desiredCapitalQChange*self.currentPriceOfDurableProductiveGoodsPerUnit + desiredCapitalChange)
+            qRatio = (desiredCapitalQChange*self.currentPriceOfDurableProductiveGoodsPerUnit) / desiredCapitalChange
             realCapitalQChange = self.receiveLoan * qRatio
             # effects
+
             self.localStocks.DEPOSIT_Q[0].quantity += realCapitalQChange/self.currentPriceOfDurableProductiveGoodsPerUnit
             self.localStocks.DEPOSIT[0].value -= realCapitalQChange
+
+
+        self.totalCostOfCapital = self.capitalBeforeAdjustment * self.params['costOfCapital'] / self.params[
+            'timeFraction'] \
+                                  + self.desiredCapitalQsubstitutions * self.currentPriceOfDurableProductiveGoodsPerUnit
 
         self.grossInvestmentQ = realCapitalQChange
 
 
         # total cost of capital, common by aiden: i do not know what means for totalCostOfCapital, so i just ignore it
-        # self.totalCostOfCapital = self.capitalBeforeAdjustment * self.params['costOfCapital'] / self.params['timeFraction'] \
-        #                           + capitalQsubstitutions * self.currentPriceOfDurableProductiveGoodsPerUnit
-
-        self.totalCostOfCapital = 0
 
         # remove concluded aPPs from the list (backward to avoid skipping when deleting)
         for i in range(len(self.appRepository) - 1, -1, -1):
@@ -437,11 +448,26 @@ class Firm(BasicAgent):
         self.computeDebtPayments(currentTime)
 
         deposit = self.localStocks.DEPOSIT[0]
+        depositQ = self.localStocks.DEPOSIT_Q[0]
 
-        if deposit.value > self.debtBurden:
+        liquidity = deposit.value + depositQ.value
+
+        if liquidity > self.debtBurden:
             for i, loan in enumerate(self.localStocks.LOAN):
                 interestToPay, principalToPay = self.debtPayments[i, 0], self.debtPayments[i, 1]
                 valueToPay = interestToPay + principalToPay
+
+                # rebalance
+                if valueToPay > deposit.value:
+                    remind = valueToPay - deposit.value
+
+                    if remind > depositQ.value:
+                        remind = depositQ.value
+
+                    depositQ.quantity -= remind / self.currentPriceOfDurableProductiveGoodsPerUnit
+                    deposit.value += remind
+
+
                 if valueToPay > 0:
                     deposit.value -= valueToPay
                     loan.age -= 1
@@ -452,22 +478,42 @@ class Firm(BasicAgent):
                         loan.liabilityHolder.localFlows.INTEREST_LOAN += interestToPay
                     loan.value -= self.debtPayments[i, 1]
         else:
+            self.isDead = True
             print(f'Firm:{self.uid}  Default due to debt service')
 
     def payWage(self):
+        self.totalCostOfLabor = 0
         if len(self.employees) > 0:
+
             frimDeposit = self.localStocks.DEPOSIT[0]
+            firmDepositQ = self.localStocks.DEPOSIT_Q[0]
+
+            liquidity = frimDeposit.value + firmDepositQ.value
+
+            # frimDeposit = self.localStocks.DEPOSIT[0]
             depositLiabilityHolder = frimDeposit.liabilityHolder
             totalWage = 0
             for employee in self.employees:
                 totalWage += employee.wage
 
             if totalWage > frimDeposit.value:
-                print(f'Firm:{self.uid}  Default wage due to debt service')
+                remind = totalWage - frimDeposit.value
+                if remind > firmDepositQ.value:
+                    remind = firmDepositQ.value
+
+                firmDepositQ.quantity -= remind / self.currentPriceOfDurableProductiveGoodsPerUnit
+                frimDeposit.value += remind
+
+            if totalWage > frimDeposit.value:
+                self.isDead = True
+                print(f'Firm:{self.uid}  Default wage due to pay wage')
             else:
                 for employee in self.employees:
                     wage = employee.wage
                     depositLiabilityHolder.transfer(frimDeposit, employee.localStocks.DEPOSIT[0], wage)
+                    self.localFlows.WAGE += wage
+                    employee.localFlows.WAGE += wage
+                    self.totalCostOfLabor += wage
 
     def computeLaborDemand(self):
         currentWorkers = len(self.employees)
@@ -485,7 +531,10 @@ class Firm(BasicAgent):
         else:
             self.laborDemand = expect_labor - currentWorkers
 
-        return self.laborDemand
+        if self.laborDemand > 0:
+            return [self.laborDemand]
+        else:
+            return None
 
     def computeDesiredOutput(self):
         shareOfInventoriesBeingSold = self.params['minOfInventoriesBeingSold'] \
@@ -493,6 +542,19 @@ class Firm(BasicAgent):
         inventories = self.localStocks.CONS_GOOD[0].quantity
         self.desiredOutput = shareOfInventoriesBeingSold * inventories
         return self.desiredOutput
+
+    def computeConsumptionSupply(self):
+        self.real_sales = 0
+        self.revenues = 0
+
+        inventory_delta = self.computeDesiredOutput()
+        curr_price = self.computePrice()
+        self.localStocks.CONS_GOOD[0].price = curr_price
+
+        if inventory_delta > 0:
+            return [curr_price, inventory_delta]
+        else:
+            return None
 
     def getPriceLowerBound(self):
         if self.desiredOutput == 0:
@@ -526,6 +588,16 @@ class Firm(BasicAgent):
             return curr_price
         else:
             return priceLowerBound
+
+
+    def computeLoanDemand(self):
+        self.receiveLoan = 0
+        capitalChange = self.desiredCapitalSubstitutions + self.requiredCapitalIncrement
+
+        if capitalChange > 0:
+            return [capitalChange]
+        else:
+            return None
 
 
     def makeBalancesheet(self, current_time):
@@ -574,6 +646,10 @@ class Firm(BasicAgent):
         self.myBalancesheet[current_time, 19] = self.productionType
 
         self.cleanLoan()
+
+    def updateLag(self):
+        self.lag_sales = self.real_sales
+        self.lag_normal_inventories = self.localStocks.CONS_GOOD[0].value
 
     def cleanLoan(self):
         # to_remove = []

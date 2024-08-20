@@ -12,7 +12,7 @@ class Household(BasicAgent):
     # stock
     STOCK_TYPES = [('DEPOSIT', True), ('CONS_GOOD', True)]
 
-    FLOW_TYPES = [('INTEREST_DEPOSIT', True), ('CONSUMPTION', True)]
+    FLOW_TYPES = [('INTEREST_DEPOSIT', True), ('CONSUMPTION', False), ('WAGE', True)]
     LAG_TYPES = ['EMPLOYED']
 
     def __init__(self, uid: Tuple, model, isGlobal: bool, paramGroup: int,):
@@ -47,21 +47,25 @@ class Household(BasicAgent):
             return 0
 
     def computeConsumptionDemand(self):
-        self.mergeInformationTableData()
+        asset = self.localStocks.DEPOSIT[0].value
+
         propensityOOI = 0.385
         propensityOOW = 0.25
         netIncome = self.getNetIncome()
         netWealth = self.getNetWealth()
 
         demand = (propensityOOI * netIncome + propensityOOW * netWealth)
-        return demand
+        if demand > 0 or asset > 0:
+            return [demand, asset]
+        else:
+            return None
 
     def computeWage(self):
 
-        # employmentRate = self.getMicroUnemploymentRate()
+        # employmentRate = self.getMicroEmploymentRate()
         # wage = self.wage
         #
-        # if employmentRate > 0.49:
+        # if employmentRate <= 0.49:
         #     wage -= 0.5 * wage * random.random()
         # else:
         #     macroReferenceVariable = self.getMacroUnemploymentRate()
@@ -71,14 +75,21 @@ class Household(BasicAgent):
         # self.wage = max(wage, 0)
         return self.wage
 
+    def computeLaborSupply(self):
+        self.computeWage()
 
-    def getMicroUnemploymentRate(self):
+        if self.employer is not None:
+            return [1]
+        else:
+            return None
+
+    def getMicroEmploymentRate(self):
         if self.employer is None:
-            averageUnemployment = 1
-            for i in range(1, self.employmentWageLag):
-                averageUnemployment += self.lagValues.EMPLOYED[i]
+            averageEmployment = 0
+            for i in range(0, self.employmentWageLag-1):
+                averageEmployment += self.lagValues.EMPLOYED[i]
 
-            return averageUnemployment / self.employmentWageLag
+            return averageEmployment / self.employmentWageLag
         else:
             return 0
 
@@ -88,7 +99,10 @@ class Household(BasicAgent):
         else:
             return 0
 
-    # def save(self):
+    def updateLag(self):
+        self.lagValues.EMPLOYED.appendleft(1 if self.employer else 0)
+
+# def save(self):
     #     basic_info = super().save()
     #
     #     params = (

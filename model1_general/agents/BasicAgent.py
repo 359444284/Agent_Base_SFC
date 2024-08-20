@@ -152,8 +152,13 @@ class BasicAgent(core.Agent, abc.ABC):
         self._globalFlows.fill(0)
         self._localFlows.fill(0)
 
+    def updateLag(self):
+        pass
+
     def updateExpectation(self):
         pass
+
+
 
     def getNetWealth(self):
         net_wealth = 0

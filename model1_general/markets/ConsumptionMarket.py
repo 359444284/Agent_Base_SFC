@@ -41,7 +41,7 @@ class ComsumptionMarket(BasicMarket):
 
         self.varify = True
 
-    def process_transactions(self, rank_id, demander_idx, remind_supplier, alive_demander):
+    def process_transactions(self, rank_id, demander_idx, alive_demander):
         demanderUid = self.globalDemanderUids[rank_id][demander_idx[rank_id] - 1]
         demanderInfo = self.globalDemanderInfos[demanderUid]
 
@@ -53,7 +53,7 @@ class ComsumptionMarket(BasicMarket):
             demander_idx[rank_id] -= 1
             return
 
-        supplierUid = self.match_suppliers(rank_id, remind_supplier)
+        supplierUid = self.match_suppliers(rank_id)
         if supplierUid is None:
             return
 
@@ -85,7 +85,6 @@ class ComsumptionMarket(BasicMarket):
 
             if supplierInfo[1] == 0:
                 self.globalSupplierUids[rank_id].remove(supplierUid)
-                remind_supplier[rank_id] -= 1
 
         demander_idx[rank_id] -= 1
 
@@ -94,17 +93,7 @@ class ComsumptionMarket(BasicMarket):
             self.globalDemanderUids[i] = [uid for uid in demanders if uid in alive_demanders]
             random.shuffle(self.globalDemanderUids[i])
 
-    def match_suppliers(self, rank_id, remind_suppliers):
-        # supplierUid = random.choice(self.globalSupplierUids[rank_id])
-        # while self.globalSupplierInfos[supplierUid][0] == 0:
-        #     self.globalSupplierUids[rank_id].remove(supplierUid)
-        #     remind_suppliers[rank_id] -= 1
-        #     if remind_suppliers[rank_id] <= 0:
-        #         remind_suppliers[rank_id] = 0
-        #         return None
-        #     supplierUid = random.choice(self.globalSupplierUids[rank_id])
-        # return supplierUid
-
+    def match_suppliers(self, rank_id):
         supplierUids = random.choices(self.globalSupplierUids[rank_id], k=3)
         minPrice = np.inf
         minUid = None

@@ -42,10 +42,10 @@ class LaborMarket(BasicMarket):
 
         self.varify = True
 
-    def process_transactions(self, rank_id, demander_idx, remaining_suppliers, alive_demanders):
+    def process_transactions(self, rank_id, demander_idx, alive_demanders):
         demanderUid = self.globalDemanderUids[rank_id][demander_idx[rank_id] - 1]
 
-        supplierUid = self.match_suppliers(rank_id, remaining_suppliers)
+        supplierUid = self.match_suppliers(rank_id)
         if supplierUid is None:
             return
         supplierInfo = self.globalSupplierInfos[supplierUid]
@@ -61,22 +61,21 @@ class LaborMarket(BasicMarket):
 
             if supplierInfo[0] == 0:
                 self.globalSupplierUids[rank_id].remove(supplierUid)
-                remaining_suppliers[rank_id] -= 1
+
 
         demander_idx[rank_id] -= 1
+
 
     def shuffle_demanders(self, alive_demanders):
         for i, demanders in enumerate(self.globalDemanderUids):
             self.globalDemanderUids[i] = [uid for uid in demanders if uid in alive_demanders]
             random.shuffle(self.globalDemanderUids[i])
 
-    def match_suppliers(self, rank_id, remind_suppliers):
+    def match_suppliers(self, rank_id):
         supplierUid = random.choice(self.globalSupplierUids[rank_id])
         while self.globalSupplierInfos[supplierUid][0] == 0:
             self.globalSupplierUids[rank_id].remove(supplierUid)
-            remind_suppliers[rank_id] -= 1
-            if remind_suppliers[rank_id] <= 0:
-                remind_suppliers[rank_id] = 0
+            if len(self.globalSupplierUids[rank_id]) <= 0:
                 return None
             supplierUid = random.choice(self.globalSupplierUids[rank_id])
 

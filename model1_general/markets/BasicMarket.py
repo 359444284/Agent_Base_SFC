@@ -7,6 +7,7 @@ import numpy as np
 from typing import Tuple, List, Dict
 from repast4py import core
 
+
 class BasicMarket(core.Agent, ABC):
 
     def __init__(self, uid: Tuple, isGlobal: bool, paramGroup: int, nround: int):
@@ -105,7 +106,6 @@ class BasicMarket(core.Agent, ABC):
         self.matched_info = [defaultdict(list) for _ in range(len(self.globalDemanderUids))]
 
         alive_demander = set(self.globalDemanderInfos.keys())
-        remind_supplier = [len(ls) for ls in self.globalSupplierUids]
 
         for i, localSupplierUids in enumerate(self.globalSupplierUids):
             self.globalSupplierUids[i] = [uid for uid in localSupplierUids if uid in self.globalSupplierInfos]
@@ -113,17 +113,18 @@ class BasicMarket(core.Agent, ABC):
         for _ in range(self.nround):
             self.shuffle_demanders(alive_demander)
             demander_idx = [len(ls) for ls in self.globalDemanderUids]
+
             active_ranks = list(range(len(self.globalDemanderUids)))
 
             while active_ranks:
                 for rank_id in active_ranks.copy():  # Copy to allow modification during iteration
-                    if demander_idx[rank_id] <= 0 or remind_supplier[rank_id] <= 0:
+                    if demander_idx[rank_id] <= 0 or len(self.globalSupplierUids[rank_id]) <= 0:
                         active_ranks.remove(rank_id)
                         continue
 
-                    self.process_transactions(rank_id, demander_idx, remind_supplier, alive_demander)
+                    self.process_transactions(rank_id, demander_idx, alive_demander)
 
-                    if not (demander_idx[rank_id] > 0 and remind_supplier[rank_id] > 0):
+                    if not (demander_idx[rank_id] > 0 and len(self.globalSupplierUids[rank_id]) > 0):
                         active_ranks.remove(rank_id)
 
         if self.verify:
@@ -135,19 +136,18 @@ class BasicMarket(core.Agent, ABC):
             random.shuffle(self.globalDemanderUids[i])
 
     @abstractmethod
-    def process_transactions(self, rank_id, demander_idx, remind_supplier, alive_demander):
+    def process_transactions(self, rank_id, demander_idx, alive_demander):
         pass
 
     @abstractmethod
-    def match_suppliers(self, rank_id, remind_suppliers):
+    def match_suppliers(self, rank_id):
         supplierUid = random.choice(self.globalSupplierUids[rank_id])
         while self.globalSupplierInfos[supplierUid][0] == 0:
             self.globalSupplierUids[rank_id].remove(supplierUid)
-            remind_suppliers[rank_id] -= 1
-            if remind_suppliers[rank_id] <= 0:
-                remind_suppliers[rank_id] = 0
+            if len(self.globalSupplierUids[rank_id]) == 0:
                 return None
             supplierUid = random.choice(self.globalSupplierUids[rank_id])
+
         return supplierUid
 
     # Checking Data Integrity

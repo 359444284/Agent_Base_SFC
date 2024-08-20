@@ -54,7 +54,7 @@ class CommercialBank(BasicAgent):
             depositor.localFlows.INTEREST_DEPOSIT += payInterests
             deposit.value += payInterests
 
-    def getCreditSupply(self):
+    def computeLoanSupply(self):
         netWealth = self.getNetWealth()
 
         desiredLoansStock = max(-netWealth*0.8, 0)
@@ -65,7 +65,10 @@ class CommercialBank(BasicAgent):
 
         self.loanSupply = newLoansSupply
 
-        return newLoansSupply
+        if newLoansSupply > 0:
+            return [newLoansSupply]
+        else:
+            return None
         # self.loanSupply = 999999
         # return 999999
 

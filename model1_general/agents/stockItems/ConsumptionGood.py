@@ -12,6 +12,7 @@ class ConsumptionGood:
     ObservePeriod: int
     assetHolder: BasicAgent
     liabilityHolder: BasicAgent
+    producer: BasicAgent
     iniValue: float = field(init=False)
     age: int = field(init=False)
 

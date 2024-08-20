@@ -147,8 +147,8 @@ agent_resources:
 
   *HOUSEHOLD_TYPE:
     &default_household_resource 0:
-      dp_max: 1000
-      dp_min: 1000
+      dp_max: 100
+      dp_min: 100
 
   *CEN_BANK_TYPE:
     &default_cen_bank_resource 0:
@@ -174,7 +174,7 @@ agent_distribute_mode: mean
 
 ini_agents_uniform:
   *FIRM_TYPE:
-    total_amount: 100
+    total_amount: 500
     rank_weight:
     local_distribute:
       com_firm1:
@@ -258,7 +258,7 @@ ini_agents_uniform:
         isGlobal: true
 
   *HOUSEHOLD_TYPE :
-    total_amount: 1000
+    total_amount: 10000
     rank_weight:
     local_distribute:
       local_household:
